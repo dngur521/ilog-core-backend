@@ -1,0 +1,48 @@
+spring:
+    application:
+        name: ilog-core-backend
+    servlet:
+        multipart:
+            max-file-size: 1GB
+            max-request-size: 10GB
+    mvc:
+        async:
+            request-timeout: 15m
+    data:
+        redis:
+            host: localhost
+            port: 6379
+    jpa:
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
+                highlight_sql: true
+                dialect: org.hibernate.dialect.MySQLDialect
+        hibernate:
+            ddl-auto: update
+    datasource:
+        url: jdbc:mysql://203.231.146.220:3306/kumoh202507
+        username: kumoh202507
+        password: kumoh20250712#
+        driver-class-name: com.mysql.cj.jdbc.Driver
+server:
+    tomcat:
+        connection-timeout: 15m
+        max-http-form-post-size: 10GB
+        max-swallow-size: 10GB
+jaas:
+    app:
+        id: 'vpaas-magic-cookie-a80559f9e99043869d59261473365c5a/38d274'
+    api:
+        key:
+            path: 'classpath:private_key.pem'
+    webhook:
+        secret: 'mGMbMI9tHiTFqBgMnoMbh5gtU47XTq2i9xawEBZv'
+security:
+    jwt:
+        secret: 'bXktc3VwZXItbG9uZy1iYXNlNjQtZW5jb2RlZC1zZWNyZXQtc3RyaW5nLWF0LWxlYXN0LTI1Ni1iaXRz'
+        access-expiration-ms: 18000000 # 30분*10
+        refresh-expiration-ms: 604800000 # 7일
+        issuer: 'team-ilo9'
+        clock-skew-seconds: 30
