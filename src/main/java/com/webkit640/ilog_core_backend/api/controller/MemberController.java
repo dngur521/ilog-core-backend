@@ -33,7 +33,7 @@ public class MemberController {
 
     //회원 가입
     @PostMapping
-    public ResponseEntity<MemberResponse.Detail> registerMember(@RequestBody MemberRequest.Create request) {
+    public ResponseEntity<MemberResponse.Detail> registerMember(@RequestBody MemberRequest.Create request){
         Member member = memberService.registerMember(request);
         return ResponseEntity.ok(memberMapper.toDetail(member));
     }
@@ -42,7 +42,7 @@ public class MemberController {
     @GetMapping
     public ResponseEntity<MemberResponse.Detail> findMember(
             @AuthenticationPrincipal CustomUserDetails currentMember
-    ) {
+    ){
         Long currentMemberId = currentMember.getId();
         Member member = memberService.getMember(currentMemberId);
         return ResponseEntity.ok(memberMapper.toDetail(member));
@@ -53,9 +53,9 @@ public class MemberController {
     public ResponseEntity<MemberResponse.Detail> updateMember(
             @RequestBody MemberRequest.Update request,
             @AuthenticationPrincipal CustomUserDetails currentMember
-    ) {
+    ){
         Long currentMemberId = currentMember.getId();
-        Member member = memberService.updateMember(request, currentMemberId);
+        Member member = memberService.updateMember(request,currentMemberId);
         return ResponseEntity.ok(memberMapper.toDetail(member));
     }
 
@@ -64,7 +64,7 @@ public class MemberController {
     public ResponseEntity<Void> deleteMember(
             @PathVariable("memberId") Long memberId,
             @AuthenticationPrincipal CustomUserDetails currentMember
-    ) {
+    ){
         Long currentMemberId = currentMember.getId();
         memberService.deleteMember(memberId, currentMemberId);
         return ResponseEntity.noContent().build();
@@ -74,7 +74,7 @@ public class MemberController {
     @PostMapping("/find-email")
     public ResponseEntity<MemberResponse.Email> findEmail(
             @RequestBody MemberRequest.PhoneNum phoneNum
-    ) {
+    ){
         String email = memberService.getEmail(phoneNum.getPhoneNum());
         return ResponseEntity.ok(memberMapper.toEmail(email));
     }
@@ -83,16 +83,16 @@ public class MemberController {
     @PostMapping("/password/verify")
     public ResponseEntity<AuthResponse.Token> verifyAccount(
             @RequestBody MemberRequest.Verify request
-    ) {
-        String resetToken = memberService.verifyAccount(request);
-        return ResponseEntity.ok(authMapper.toToken(resetToken, resetToken));
+    ){
+        String accessToken = memberService.verifyAccount(request);
+        return ResponseEntity.ok(authMapper.toToken(accessToken));
     }
 
     //비밀번호 찾기(새 비밀번호 저장)
     @PatchMapping("/password/reset")
     public ResponseEntity<MemberResponse.Detail> resetPassword(
-            @RequestBody MemberRequest.Reset request
-    ) {
+        @RequestBody MemberRequest.Reset request
+    ){
         Member member = memberService.resetPassword(request);
         return ResponseEntity.ok(memberMapper.toDetail(member));
     }

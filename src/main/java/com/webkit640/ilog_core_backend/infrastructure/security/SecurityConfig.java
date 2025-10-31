@@ -55,10 +55,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(List.of("https://webkit-ilo9.duckdns.org", "http://localhost:3000"));
+        // cfg.setAllowedOrigins(List.of("https://webkit-ilo9.duckdns.org", "http://localhost:3000", "*"));
+        cfg.setAllowedOriginPatterns(List.of("https://webkit-ilo9.duckdns.org", "http://localhost:3000", "*"));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-//        cfg.setAllowedHeaders(List.of("*"));
+        // cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+        cfg.setAllowedHeaders(List.of("*"));
         cfg.setAllowCredentials(true);
         cfg.setMaxAge(3600L);
 
@@ -93,7 +94,7 @@ public class SecurityConfig {
                 .contentSecurityPolicy(csp -> csp
                 .policyDirectives("default-src 'self'; script-src 'self'; object-src 'none; frame-ancestors 'none'")
                 )
-                //                        .frameOptions(frame -> frame.sameOrigin()) H2 콘솔 등 필요시
+                // .frameOptions(frame -> frame.sameOrigin()) H2 콘솔 등 필요시
                 )
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -105,6 +106,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/jitsi-jwt").permitAll()
                 .requestMatchers(HttpMethod.POST, "/summaries/audio").permitAll()
                 .requestMatchers(HttpMethod.POST, "/summaries/retry").permitAll()
+                .requestMatchers(HttpMethod.POST, "/summaries/simple").permitAll()
                 .requestMatchers(HttpMethod.GET, "/members").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/members").authenticated()
                 .requestMatchers("/members/**").authenticated()

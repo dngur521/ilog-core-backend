@@ -49,11 +49,54 @@ public class SummaryController {
                 .build();
     }
 
-    /*
-    *
-    * TODO: 간단 요약 API 엔드포인트 생성 및 AI 서버 엔드포인트(/summary)로 데이터 전송 및 받아오기
-    *
-    * */
+    /**
+     * React로부터 요약할 텍스트를 받아 AI 서버의 /summary 엔드포인트로 전송하고 결과를 반환합니다. (AI 서버가
+     * 'text' 필드를 Form Data로 기대하므로, 이를 맞춰서 전송합니다.)
+     *
+     * @param request React에서 전송한 JSON 데이터 (text 포함)
+     * @return 요약 결과 또는 오류 정보가 담긴 ResponseEntity
+     */
+    @PostMapping("/summaries/simple")
+    public ResponseEntity<SummarizeResponse> handleSimpleSummary(@RequestBody SimpleSummaryRequest request) {
+        System.out.println(
+                "단순 요약 요청 수신: " + request.getText().substring(0, Math.min(request.getText().length(), 50)) + "...");
+
+        // FastAPI 서버는 'text'를 Form Data로 받습니다.
+        MultiValueMap<String, String> formData = new org.springframework.util.LinkedMultiValueMap<>();
+        formData.add("text", request.getText());
+
+        try {
+            // 1. WebClient를 사용하여 외부 AI 서버의 /summary 엔드포인트 호출
+            AIResponse aiResponse = this.webClient.post()
+                    .uri("/summary") // 외부 서버의 단순 요약 엔드포인트
+                    // FastAPI의 Form Data (@Form)에 맞게 Content-Type을 설정합니다.
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    // MultiValueMap을 사용하여 form-urlencoded 본문을 전송합니다.
+                    .body(BodyInserters.fromFormData(formData))
+                    .retrieve()
+                    .bodyToMono(AIResponse.class) // AI 서버 응답을 AIResponse DTO로 받음
+                    .block(); // 동기적으로 결과 대기
+
+            // 2. 외부 서버 응답을 React 형식으로 변환
+            SummarizeResponse finalResponse = new SummarizeResponse(
+                    aiResponse.getText(), // 단순 요약 결과를 summary 필드에 매핑
+                    aiResponse.getError(),
+                    null // 단순 요약에는 transcriptId가 필요 없음
+            );
+            System.out.println("AI 서버로부터 단순 요약 응답 수신 완료. React로 전달.");
+
+            // 3. 최종 응답을 React로 반환
+            return ResponseEntity.ok(finalResponse);
+
+        } catch (Exception e) {
+            // 외부 서버 통신 중 예외 발생 시 처리
+            System.err.println("AI 서버 단순 요약 통신 중 오류: " + e.getMessage());
+            e.printStackTrace();
+
+            return ResponseEntity.internalServerError()
+                    .body(new SummarizeResponse(null, "단순 요약 처리 중 서버 오류가 발생했습니다.", null));
+        }
+    }
 
     /**
      * React로부터 5분 단위 또는 최종 오디오 청크를 받아 AI 서버로 전달합니다.
@@ -239,6 +282,20 @@ public class SummaryController {
     /**
      * React 프론트엔드로부터 재시도 요청을 받을 때 사용하는 DTO 클래스입니다.
      */
+    public static class SimpleSummaryRequest {
+
+        private String text; // 요약할 텍스트
+
+        // Getter, Setter 메소드 ...
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+    }
+
     public static class RetryRequest {
 
         private String startTime; // 회의 시작 시간
