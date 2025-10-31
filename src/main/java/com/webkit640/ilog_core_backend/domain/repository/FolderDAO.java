@@ -1,20 +1,22 @@
 package com.webkit640.ilog_core_backend.domain.repository;
 
-import com.webkit640.ilog_core_backend.domain.model.Folder;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-import java.util.Optional;
+import com.webkit640.ilog_core_backend.domain.model.Folder;
 
 public interface FolderDAO extends JpaRepository<Folder, Long> {
+
     List<Folder> findByParentFolder(Folder folder);
 
     //Lazy 로딩 방지를 위해 participants를 미리 함께 조회
-    @Query("SELECT f FROM Folder f " +
-            "LEFT JOIN FETCH f.folderParticipants " +
-            "WHERE f.id = :folderId")
+    @Query("SELECT f FROM Folder f "
+            + "LEFT JOIN FETCH f.folderParticipants "
+            + "WHERE f.id = :folderId")
     Optional<Folder> findByIdWithParticipantsAndChildren(@Param("folderId") Long folderId);
 
     @Query(value = """

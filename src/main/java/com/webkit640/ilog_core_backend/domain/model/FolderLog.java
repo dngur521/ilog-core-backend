@@ -7,6 +7,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class FolderLog extends CommonLog{
+public class FolderLog extends CommonLog {
+
     private Long folderId;
 }

@@ -1,19 +1,34 @@
 package com.webkit640.ilog_core_backend.application.service;
 
-import com.webkit640.ilog_core_backend.api.exception.CustomException;
-import com.webkit640.ilog_core_backend.domain.model.*;
-import com.webkit640.ilog_core_backend.domain.repository.*;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.webkit640.ilog_core_backend.api.exception.CustomException;
+import com.webkit640.ilog_core_backend.domain.model.ActionType;
+import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
+import com.webkit640.ilog_core_backend.domain.model.Folder;
+import com.webkit640.ilog_core_backend.domain.model.FolderParticipant;
+import com.webkit640.ilog_core_backend.domain.model.Member;
+import com.webkit640.ilog_core_backend.domain.model.Minutes;
+import com.webkit640.ilog_core_backend.domain.model.MinutesParticipant;
+import com.webkit640.ilog_core_backend.domain.model.ParticipantLog;
+import com.webkit640.ilog_core_backend.domain.model.ParticipantType;
+import com.webkit640.ilog_core_backend.domain.repository.FolderDAO;
+import com.webkit640.ilog_core_backend.domain.repository.FolderParticipantDAO;
+import com.webkit640.ilog_core_backend.domain.repository.MinutesDAO;
+import com.webkit640.ilog_core_backend.domain.repository.MinutesParticipantDAO;
+import com.webkit640.ilog_core_backend.domain.repository.ParticipantLogDAO;
+
+import lombok.RequiredArgsConstructor;
 
 //쉽지 않음
 @Service
 @RequiredArgsConstructor
 public class PermissionPropagationService {
+
     private final FolderDAO folderDAO;
     private final MinutesDAO minutesDAO;
     private final FolderParticipantDAO folderParticipantDAO;
@@ -23,37 +38,37 @@ public class PermissionPropagationService {
 
     //상향 전파: 회의록에 추가 -> 상위 폴더/조상 폴더에도 권한 보장
     @Transactional
-    public void grantToMinutes(Long minutesId, Long memberId){
+    public void grantToMinutes(Long minutesId, Long memberId) {
         Minutes minutes = minutesDAO.findById(minutesId)
-                .orElseThrow(()-> new CustomException(ErrorCode.MINUTES_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.MINUTES_NOT_FOUND));
         Member member = memberService.getMember(memberId);
 
         //--------------회의록에 참가자 없으면 추가---------------
-        addMinutesParticipantIfAbsent(minutes,member);
-       //---------------상위 폴더로 bubble-up---------------
-        bubbleUpToAncestors(minutes.getFolder(),member);
+        addMinutesParticipantIfAbsent(minutes, member);
+        //---------------상위 폴더로 bubble-up---------------
+        bubbleUpToAncestors(minutes.getFolder(), member);
     }
-    
+
     // 하향 전파 : 폴더에 추가 -> 모든 하위 폴더에도 권한 보장
     @Transactional
-    public void grantToFolders(Long folderId, Long memberId){
+    public void grantToFolders(Long folderId, Long memberId) {
         Folder folder = folderDAO.findById(folderId)
-                .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
         Member member = memberService.getMember(memberId);
 
         //----------------현재 폴더에 권한 추가---------------------------
         addFolderParticipantIfAbsent(folder, member);
         //------------------ 하위 폴더에도 권한 추가---------------------
-        for (Folder child : collectDescendants(folder)){
-            addFolderParticipantIfAbsent(child,member);
+        for (Folder child : collectDescendants(folder)) {
+            addFolderParticipantIfAbsent(child, member);
         }
     }
 
     // 상위 -> 하위 전체 삭제 : 폴더에서 제거 -> 모든 하위 폴더/회의록에서도 제거
     @Transactional
-    public void removeToFoldersAndMinutes(Long folderId, Long memberId){
+    public void removeToFoldersAndMinutes(Long folderId, Long memberId) {
         Folder folder = folderDAO.findByIdWithOwnerAndParticipants(folderId)
-                .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
         Member member = memberService.getMember(memberId);
 
         //------------------현재 폴더에서 권한 삭제---------------------
@@ -61,28 +76,27 @@ public class PermissionPropagationService {
 
         //--------------------하위 폴더에서 권한 삭제-------------------
         List<Folder> descendants = collectDescendants(folder);
-        for(Folder f : descendants){
+        for (Folder f : descendants) {
             removeFolderParticipantIfPresent(f, member);
         }
-        
+
         //현재 폴더 + 하위 폴더의 모든 회의록에서 회의록 참가자 제거
         removeMinutesParticipantsInFolderTree(folder, descendants, member);
     }
 
     //------------------------유틸--------------------------------
-
     //-------------상위 폴더로 bubble-up---------------
-    private void bubbleUpToAncestors(Folder folder, Member member){
+    private void bubbleUpToAncestors(Folder folder, Member member) {
         Folder cursor = folder;
-        while(cursor != null){
-            addFolderParticipantIfAbsent(cursor,member);
+        while (cursor != null) {
+            addFolderParticipantIfAbsent(cursor, member);
             cursor = cursor.getParentFolder();
         }
     }
 
     // --------------------회의록에 참가자 없으면 추가---------------------
-    private void addMinutesParticipantIfAbsent(Minutes minutes, Member member){
-        if(!minutesParticipantDAO.existsByMinutesAndParticipant(minutes,member)){
+    private void addMinutesParticipantIfAbsent(Minutes minutes, Member member) {
+        if (!minutesParticipantDAO.existsByMinutesAndParticipant(minutes, member)) {
             MinutesParticipant mp = new MinutesParticipant();
             mp.setMinutes(minutes);
             mp.setParticipant(member);
@@ -90,12 +104,13 @@ public class PermissionPropagationService {
 
             //----------------------로그--------------------------
             Member owner = minutes.getFolder().getOwner();
-            participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.MINUTES, ActionType.CREATE,"참여자 추가");
+            participantLogging(owner.getId(), owner.getEmail(), LocalDateTime.now(), member.getEmail(), ParticipantType.MINUTES, ActionType.CREATE, "참여자 추가");
         }
     }
+
     //--------------------폴더에 참여자가 있는지 확인 후, 없으면 추가----------
-    private void addFolderParticipantIfAbsent(Folder folder, Member member){
-        if(!folderParticipantDAO.existsByFolderAndParticipant(folder,member)){
+    private void addFolderParticipantIfAbsent(Folder folder, Member member) {
+        if (!folderParticipantDAO.existsByFolderAndParticipant(folder, member)) {
             FolderParticipant fp = new FolderParticipant();
             fp.setFolder(folder);
             fp.setParticipant(member);
@@ -103,49 +118,49 @@ public class PermissionPropagationService {
             folderParticipantDAO.save(fp);
             //----------------------로그--------------------------
             Member owner = folder.getOwner();
-            participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.FOLDER,ActionType.CREATE,"참여자 추가");
+            participantLogging(owner.getId(), owner.getEmail(), LocalDateTime.now(), member.getEmail(), ParticipantType.FOLDER, ActionType.CREATE, "참여자 추가");
 
         }
     }
 
     // 현재 폴더 + 하위 폴더의 모든 회의록에서 회의록 참가자 제거
-    private void removeMinutesParticipantsInFolderTree(Folder root, List<Folder> descendants, Member member){
+    private void removeMinutesParticipantsInFolderTree(Folder root, List<Folder> descendants, Member member) {
         //현재 폴더 minutes
-        for(Minutes m : minutesDAO.findByFolder(root)){
-            removeMinutesParticipantIfPresent(m,member);
+        for (Minutes m : minutesDAO.findByFolder(root)) {
+            removeMinutesParticipantIfPresent(m, member);
         }
         //하위 폴더들 minutes
-        for(Folder f : descendants){
-            for (Minutes m : minutesDAO.findByFolder(f)){
-                removeMinutesParticipantIfPresent(m,member);
+        for (Folder f : descendants) {
+            for (Minutes m : minutesDAO.findByFolder(f)) {
+                removeMinutesParticipantIfPresent(m, member);
             }
         }
     }
 
     //폴더에 참가자가 있으면 제거
-    private void removeFolderParticipantIfPresent(Folder folder, Member member){
+    private void removeFolderParticipantIfPresent(Folder folder, Member member) {
         folderParticipantDAO.deleteByFolderAndParticipant(folder, member);
         //----------------------로그--------------------------
         Member owner = folder.getOwner();
-        participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.FOLDER,ActionType.DELETE,"참여자 퇴출");
+        participantLogging(owner.getId(), owner.getEmail(), LocalDateTime.now(), member.getEmail(), ParticipantType.FOLDER, ActionType.DELETE, "참여자 퇴출");
 
     }
 
     //파일에 참가자가 있으면 제거
-    private void removeMinutesParticipantIfPresent(Minutes minutes, Member member){
+    private void removeMinutesParticipantIfPresent(Minutes minutes, Member member) {
         //----------------------로그--------------------------
         Member owner = minutes.getFolder().getOwner();
-        participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 퇴출");
+        participantLogging(owner.getId(), owner.getEmail(), LocalDateTime.now(), member.getEmail(), ParticipantType.MINUTES, ActionType.DELETE, "참여자 퇴출");
         minutesParticipantDAO.deleteByMinutesAndParticipant(minutes, member);
     }
 
     //------------------------ 모든 자식 가져온다 -----------------------
-    private List<Folder> collectDescendants(Folder root){
+    private List<Folder> collectDescendants(Folder root) {
         return folderDAO.findAllChildren(root.getId());
     }
 
     //참여자 로그 남기기
-    public void participantLogging(Long userId, String email, LocalDateTime createdAt, String folderParticipantEmail, ParticipantType participantType, ActionType status, String description){
+    public void participantLogging(Long userId, String email, LocalDateTime createdAt, String folderParticipantEmail, ParticipantType participantType, ActionType status, String description) {
         ParticipantLog minutesParticipantLog = new ParticipantLog();
         minutesParticipantLog.setUserId(userId);
         minutesParticipantLog.setEmail(email);
@@ -158,4 +173,3 @@ public class PermissionPropagationService {
         participantLogDAO.save(minutesParticipantLog);
     }
 }
-

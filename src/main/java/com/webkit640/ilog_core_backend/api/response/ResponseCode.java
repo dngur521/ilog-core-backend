@@ -6,7 +6,7 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 public enum ResponseCode {
-    OK(200,"Ok"), Created(201,"Created");
+    OK(200, "Ok"), Created(201, "Created");
 
     private final int code;
     private final String msg;

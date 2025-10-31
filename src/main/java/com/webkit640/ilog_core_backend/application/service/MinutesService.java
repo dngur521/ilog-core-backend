@@ -29,17 +29,19 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class MinutesService {
+
     private final MinutesDAO minutesDAO;
     private final FolderDAO folderDAO;
     private final MinutesLogDAO minutesLogDAO;
     private final MinutesParticipantDAO minutesParticipantDAO;
     private final MemberService memberService;
     private final PermissionPropagationService permissionPropagationService;
+
     //회의록 생성(주인만)
     @Transactional
     public Minutes createMinutes(Long folderId, MinutesRequest.Create request, Long ownerId) {
         //회의록 생성 및 값 넣기
-        Folder folder = folderDAO.findById(folderId).orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
+        Folder folder = folderDAO.findById(folderId).orElseThrow(() -> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
         Member owner = memberService.getMember(ownerId);
         //owner만 접근 가능
         identityVerification(folder, owner.getId());
@@ -48,9 +50,9 @@ public class MinutesService {
         minutes.setTitle(request.getTitle());
 
         //화상회의로 생긴 결과인지 아닌지 판별
-        if(request.getStatus().equals(MinutesType.MEETING)) {
+        if (request.getStatus().equals(MinutesType.MEETING)) {
             minutes.setContent("본문 넣기, 화상회의의 결과");
-        }else{
+        } else {
             minutes.setContent("본문 넣기, 사용자가 원하는 내용");
         }
 
@@ -65,7 +67,7 @@ public class MinutesService {
 
         //--------------------------folder에게 particiant를 물려받음----------------
         List<MinutesParticipant> clonedParticipants = folder.getFolderParticipants().stream()
-                .map(mp->{
+                .map(mp -> {
                     MinutesParticipant copy = new MinutesParticipant();
                     copy.setMinutes(minutes);
                     copy.setParticipant(mp.getParticipant());
@@ -75,21 +77,21 @@ public class MinutesService {
         minutes.setMinutesParticipants(clonedParticipants);
 
         //참여일시
-        MinutesParticipant minutesParticipant = minutesParticipantDAO.findByMinutesAndParticipant(minutes,owner)
-                .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
+        MinutesParticipant minutesParticipant = minutesParticipantDAO.findByMinutesAndParticipant(minutes, owner)
+                .orElseThrow(() -> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
         minutesParticipant.setApproachedAt(LocalDateTime.now());
 
         //--------------------------------로그-------------------------------
-        minutesLogging(owner.getId(),owner.getEmail(),minutes.getCreatedAt(),minutes.getId(),ActionType.CREATE,"정상 생성");
+        minutesLogging(owner.getId(), owner.getEmail(), minutes.getCreatedAt(), minutes.getId(), ActionType.CREATE, "정상 생성");
 
         return minutes;
     }
-    
+
     //회의록 조회
     public Minutes getMinutes(Long minutesId, Long userId) {
         //회의록이 없으면 에러
         Minutes minutes = minutesDAO.findById(minutesId)
-                .orElseThrow(()-> new CustomException(ErrorCode.MINUTES_NOT_FOUND));
+                .orElseThrow(() -> new CustomException(ErrorCode.MINUTES_NOT_FOUND));
         Member participant = memberService.getMember(userId);
         Folder folder = minutes.getFolder();
 
@@ -97,8 +99,8 @@ public class MinutesService {
         participantVerification(folder, userId);
 
         //참여일시
-        MinutesParticipant minutesParticipant = minutesParticipantDAO.findByMinutesAndParticipant(minutes,participant)
-                .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
+        MinutesParticipant minutesParticipant = minutesParticipantDAO.findByMinutesAndParticipant(minutes, participant)
+                .orElseThrow(() -> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
         minutesParticipant.setApproachedAt(LocalDateTime.now());
 
         //회의록 리턴
@@ -111,7 +113,7 @@ public class MinutesService {
         Minutes minutes = getMinutes(minutesId, ownerId);
         Member owner = memberService.getMember(ownerId);
 
-        if(minutes.getStatus().equals(MinutesType.MEETING)){
+        if (minutes.getStatus().equals(MinutesType.MEETING)) {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
 
@@ -119,10 +121,10 @@ public class MinutesService {
         identityVerification(minutes.getFolder(), owner.getId());
 
         //수정
-        if(request.getTitle() != null && !request.getTitle().isBlank()) {
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
             minutes.setTitle(request.getTitle());
         }
-        if(request.getContent() != null && !request.getContent().isBlank()){
+        if (request.getContent() != null && !request.getContent().isBlank()) {
             minutes.setContent(request.getContent());
         }
 
@@ -133,15 +135,14 @@ public class MinutesService {
         minutesDAO.save(minutes);
 
         //--------------------------------로그-------------------------------
-        minutesLogging(owner.getId(),owner.getEmail(),minutes.getUpdatedAt(),minutes.getId(),ActionType.UPDATE,"정상 수정");
+        minutesLogging(owner.getId(), owner.getEmail(), minutes.getUpdatedAt(), minutes.getId(), ActionType.UPDATE, "정상 수정");
 
         return minutes;
     }
 
-
     @Transactional
     public void deleteMinutes(Long minutesId, CustomUserDetails owner) {
-        Minutes minutes = getMinutes(minutesId,owner.getId());
+        Minutes minutes = getMinutes(minutesId, owner.getId());
 
         //----회의록 주인과 삭제할 대상이 같아야만 실행--------
         identityVerification(minutes.getFolder(), owner.getId());
@@ -149,7 +150,7 @@ public class MinutesService {
         minutesDAO.delete(minutes);
 
         //--------------------로그 남기기--------------------------------
-        minutesLogging(owner.getId(),owner.getUsername(),LocalDateTime.now(),minutes.getId(),ActionType.DELETE,"정상 삭제");
+        minutesLogging(owner.getId(), owner.getUsername(), LocalDateTime.now(), minutes.getId(), ActionType.DELETE, "정상 삭제");
     }
 
     //------------------------------------권한 관리-----------------------------------------
@@ -164,7 +165,7 @@ public class MinutesService {
         //-------------------이미 참여되어 있는지 검증-------------------
         alreadyParticipant(minutes, createMember);
         //-------------------참여자 추가-------------------
-        permissionPropagationService.grantToMinutes(minutesId,request.getCreateMemberId());
+        permissionPropagationService.grantToMinutes(minutesId, request.getCreateMemberId());
         //--------------수정된 회원 리스트 리턴-----------
         return minutesParticipantDAO.findByMinutes(minutes);
     }
@@ -176,6 +177,7 @@ public class MinutesService {
         identityVerification(minutes.getFolder(), owner.getId());
         return minutesParticipantDAO.findByMinutes(minutes);
     }
+
     @Transactional
     // 참가자 퇴출
     public List<MinutesParticipant> deleteParticipant(Long minutesId, ParticipantRequest.Delete request, CustomUserDetails owner) {
@@ -189,34 +191,37 @@ public class MinutesService {
         //----------------삭제-------------------------
         minutesParticipantDAO.deleteByMinutesAndParticipant(minutes, deleteMember);
         //----------------------로그--------------------------
-        permissionPropagationService.participantLogging(owner.getId(),owner.getUsername(),LocalDateTime.now(),deleteMember.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 삭제");
+        permissionPropagationService.participantLogging(owner.getId(), owner.getUsername(), LocalDateTime.now(), deleteMember.getEmail(), ParticipantType.MINUTES, ActionType.DELETE, "참여자 삭제");
         //--------------수정된 회원 리스트 리턴-----------
         return minutesParticipantDAO.findByMinutes(minutes);
     }
 
     //폴더에 누가 만들었는지가 있기에 폴더를 통해서 확인
-    private void identityVerification(Folder folder, Long ownerId){
-        if(!folder.getOwner().getId().equals(ownerId)){
+    private void identityVerification(Folder folder, Long ownerId) {
+        if (!folder.getOwner().getId().equals(ownerId)) {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
     }
-    //접근 권한이 있는지 확인
-    private void participantVerification(Folder folder, Long userId){
-        boolean hasAccess = folder.getFolderParticipants().stream().anyMatch(
-                fp->fp.getParticipant().getId().equals(userId));
 
-        if(!hasAccess){
+    //접근 권한이 있는지 확인
+    private void participantVerification(Folder folder, Long userId) {
+        boolean hasAccess = folder.getFolderParticipants().stream().anyMatch(
+                fp -> fp.getParticipant().getId().equals(userId));
+
+        if (!hasAccess) {
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
     }
+
     //회원이 잘 들어왔는지 확인
-    private void folderParticipantRequestIsNull(Member member){
-        if(member == null){
+    private void folderParticipantRequestIsNull(Member member) {
+        if (member == null) {
             throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
         }
     }
+
     //이미 등록되었는지 확인
-    private void alreadyParticipant(Minutes minutes, Member user){
+    private void alreadyParticipant(Minutes minutes, Member user) {
         boolean exists = minutesParticipantDAO.existsByMinutesAndParticipant(minutes, user);
         if (exists) {
             throw new CustomException(ErrorCode.ALREADY_PARTICIPANT);
@@ -224,7 +229,7 @@ public class MinutesService {
     }
 
     //회의록 로그 남기기
-    private void minutesLogging(Long userId, String email, LocalDateTime createdAt, Long minutesId, ActionType status, String description){
+    private void minutesLogging(Long userId, String email, LocalDateTime createdAt, Long minutesId, ActionType status, String description) {
         MinutesLog minutesLog = new MinutesLog();
         minutesLog.setUserId(userId);
         minutesLog.setEmail(email);
@@ -235,6 +240,5 @@ public class MinutesService {
 
         minutesLogDAO.save(minutesLog);
     }
-
 
 }

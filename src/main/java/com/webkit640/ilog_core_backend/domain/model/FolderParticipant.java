@@ -1,7 +1,10 @@
 package com.webkit640.ilog_core_backend.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +12,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class FolderParticipant extends CommonParticipant {
+
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "folder_id")

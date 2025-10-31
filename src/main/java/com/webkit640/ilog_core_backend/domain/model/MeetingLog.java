@@ -7,7 +7,7 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class MeetingLog extends CommonLog{
+public class MeetingLog extends CommonLog {
+
     private Long meetingId;
 }
-

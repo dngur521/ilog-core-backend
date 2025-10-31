@@ -1,14 +1,16 @@
 package com.webkit640.ilog_core_backend.application.mapper;
 
+import org.springframework.stereotype.Component;
+
 import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import com.webkit640.ilog_core_backend.domain.model.Minutes;
-import org.springframework.stereotype.Component;
 
 @Component
 public class MinutesMapper {
-    public MinutesResponse.Create toCreate(Minutes minutes){
+
+    public MinutesResponse.Create toCreate(Minutes minutes) {
         return new MinutesResponse.Create(
-            minutes.getId(), minutes.getTitle(), minutes.getContent(), minutes.getSummary()
+                minutes.getId(), minutes.getTitle(), minutes.getContent(), minutes.getSummary()
         );
     }
 

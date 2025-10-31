@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.FileCopyUtils;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,13 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 
-
 /**
- * Jitsi as a Service (JaaS)와의 연동을 위한 JWT(JSON Web Token)를 생성하는 컨트롤러입니다.
- * 프론트엔드에서 Jitsi 회의에 참가하기 위해 필요한 인증 토큰을 발급합니다.
+ * Jitsi as a Service (JaaS)와의 연동을 위한 JWT(JSON Web Token)를 생성하는 컨트롤러입니다. 프론트엔드에서
+ * Jitsi 회의에 참가하기 위해 필요한 인증 토큰을 발급합니다.
  */
 @RestController
-// @CrossOrigin(origins = "*") // 모든 도메인에서의 요청을 허용합니다. (CORS 설정)
 public class JitsiController {
 
     // application.properties(yml) 파일에서 JaaS App ID를 주입받습니다.
@@ -42,8 +39,8 @@ public class JitsiController {
     private Resource privateKeyResource;
 
     /**
-     * 프론트엔드로부터 방 이름(roomName), 사용자 이름(userName) 등을 받아
-     * Jitsi 회의 참가에 필요한 JWT를 생성하여 반환합니다.
+     * 프론트엔드로부터 방 이름(roomName), 사용자 이름(userName) 등을 받아 Jitsi 회의 참가에 필요한 JWT를
+     * 생성하여 반환합니다.
      *
      * @param payload 프론트엔드에서 전송한 JSON 데이터 (roomName, userName 등 포함)
      * @return 생성된 JWT가 담긴 ResponseEntity 객체
@@ -115,7 +112,8 @@ public class JitsiController {
     /**
      * PEM 형식의 Private Key 문자열을 Java의 PrivateKey 객체로 변환하는 유틸리티 메소드입니다.
      *
-     * @param pemKey "-----BEGIN PRIVATE KEY-----" ... "-----END PRIVATE KEY-----" 형식의 문자열
+     * @param pemKey "-----BEGIN PRIVATE KEY-----" ... "-----END PRIVATE
+     * KEY-----" 형식의 문자열
      * @return PrivateKey 객체
      * @throws Exception 키 변환 과정에서 발생하는 예외
      */
@@ -135,4 +133,3 @@ public class JitsiController {
         return keyFactory.generatePrivate(keySpec);
     }
 }
-

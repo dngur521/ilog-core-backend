@@ -31,8 +31,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/folders")
 public class FolderController {
+
     private final FolderMapper folderMapper;
     private final FolderService folderService;
+
     //----------------폴더-------------------
     //폴더 생성
     @PostMapping("/{folderId}")
@@ -40,51 +42,55 @@ public class FolderController {
             @PathVariable("folderId") Long folderId,
             @RequestBody FolderRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
-            ){
+    ) {
         Long ownerId = owner.getId();
-        Folder folder = folderService.createFolder(folderId, request,ownerId);
+        Folder folder = folderService.createFolder(folderId, request, ownerId);
         return ResponseEntity.ok(folderMapper.toCreate(folder));
     }
+
     //폴더 이동 디렉토리 방식
     @GetMapping("/{folderId}")
     public ResponseEntity<FolderResponse.Find> findFolder(
             @PathVariable("folderId") Long folderId,
             @AuthenticationPrincipal CustomUserDetails user
-    ){
+    ) {
         Long userId = user.getId();
         //반환값이 복합적이라 mapper를 service계층 내부에서 처리
-        FolderResponse.Find response = folderService.getFolderDetail(folderId,userId);
+        FolderResponse.Find response = folderService.getFolderDetail(folderId, userId);
         return ResponseEntity.ok(response);
     }
+
     //폴더 수정
     @PatchMapping("/{folderId}")
     public ResponseEntity<FolderResponse.Update> updateFolder(
             @PathVariable("folderId") Long folderId,
             @RequestBody FolderRequest.Update request,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         Long ownerId = owner.getId();
-        Folder folder = folderService.updateFolder(folderId, request,ownerId);
+        Folder folder = folderService.updateFolder(folderId, request, ownerId);
         return ResponseEntity.ok(folderMapper.toUpdate(folder));
     }
+
     //폴더 삭제 <- 하위 폴더 싹다 삭제 예정
     @DeleteMapping("/{folderId}")
     public ResponseEntity<Void> deleteFolder(
             @PathVariable("folderId") Long folderId,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         folderService.deleteFolder(folderId, owner);
         return ResponseEntity.noContent().build();
     }
     //---------------조원 권한 관리-----------------------------
     private final FolderParticipantMapper participantMapper;
+
     //조원 관리 추가
     @PostMapping("/{folderId}/party")
     public ResponseEntity<ParticipantResponse.Detail> createParticipant(
             @PathVariable("folderId") Long folderId,
             @RequestBody ParticipantRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         List<FolderParticipant> folderParticipantList = folderService.createParticipant(folderId, request, owner);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }
@@ -94,7 +100,7 @@ public class FolderController {
     public ResponseEntity<ParticipantResponse.Detail> findParticipant(
             @PathVariable("folderId") Long folderId,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         List<FolderParticipant> folderParticipantList = folderService.getParticipant(folderId, owner);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }
@@ -105,7 +111,7 @@ public class FolderController {
             @PathVariable("folderId") Long folderId,
             @ModelAttribute ParticipantRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         List<FolderParticipant> folderParticipantList = folderService.deleteParticipant(folderId, request, owner);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }

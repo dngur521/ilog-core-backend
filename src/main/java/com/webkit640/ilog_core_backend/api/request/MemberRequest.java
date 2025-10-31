@@ -5,9 +5,12 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 public class MemberRequest {
+
     @Data
-    public static class Create{
-        @Email  @NotBlank
+    public static class Create {
+
+        @Email
+        @NotBlank
         private String email;
         @NotBlank
         private String name;
@@ -18,27 +21,35 @@ public class MemberRequest {
         @NotBlank
         private String checkPassword;
     }
+
     @Data
-    public static class Update{
+    public static class Update {
+
         private String name;
         private String newPassword;
         private String checkPassword;
     }
+
     @Data
-    public static class PhoneNum{
+    public static class PhoneNum {
+
         @NotBlank
         private String phoneNum;
     }
+
     @Data
-    public static class Verify{
-        @Email  @NotBlank
+    public static class Verify {
+
+        @Email
+        @NotBlank
         private String email;
         @NotBlank
         private String phoneNum;
     }
 
     @Data
-    public static class Reset{
+    public static class Reset {
+
         @NotBlank
         private String resetToken;
         @NotBlank

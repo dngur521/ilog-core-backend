@@ -27,47 +27,52 @@ import lombok.AllArgsConstructor;
 @RestController
 @RequestMapping("/minutes")
 public class MemoController {
+
     private final MemoMapper mapper;
     private final MemoService memoService;
+
     //생성 (회의록 ID, req, userId)
     @PostMapping("/{minutesId}/memos")
     public ResponseEntity<MemoResponse.Detail> createMemo(
             @PathVariable("minutesId") Long minutesId,
             @RequestBody MemoRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails user
-    ){
+    ) {
         Long userId = user.getId();
         List<Memo> memos = memoService.createMemo(minutesId, request, userId);
         return ResponseEntity.ok(mapper.toDetail(memos));
 
     }
+
     //조회 (회의록 Id) <- 이거 없어도 무방, Minutes에서 같이 주면 됨
     @GetMapping("/{minutesId}/memos")
     public ResponseEntity<MemoResponse.Detail> findMemo(
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails user
-    ){
+    ) {
         Long userId = user.getId();
         List<Memo> memo = memoService.getMemo(minutesId, userId);
         return ResponseEntity.ok(mapper.toDetail(memo));
     }
+
     //수정 (회의록 Id, req, userId)
     @PatchMapping("/{minutesId}/memos")
     public ResponseEntity<MemoResponse.Detail> updateMemo(
             @PathVariable("minutesId") Long minutesId,
             @RequestBody MemoRequest.Update request,
             @AuthenticationPrincipal CustomUserDetails user
-    ){
+    ) {
         List<Memo> memo = memoService.updateMemo(minutesId, request, user);
         return ResponseEntity.ok(mapper.toDetail(memo));
     }
+
     //삭제 (회의록 Id, userId)
     @DeleteMapping("/{minutesId}/memos")
     public ResponseEntity<MemoResponse.Detail> deleteMemo(
             @PathVariable("minutesId") Long minutesId,
             @ModelAttribute MemoRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails user
-    ){
+    ) {
         memoService.deleteMemo(minutesId, request, user);
         return ResponseEntity.noContent().build();
     }

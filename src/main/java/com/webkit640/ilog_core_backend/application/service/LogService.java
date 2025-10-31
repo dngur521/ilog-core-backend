@@ -16,10 +16,12 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class LogService {
+
     private final LoginLogDAO loginLogDAO;
     // private final FolderLogDAO folderLogDAO;
     private final MeetingLogDAO meetingLogDAO;
     private final MinutesLogDAO minutesLogDAO;
+
     // private final MemoLogDAO memoLogDAO;
     // private final ParticipantLogDAO participantLogDAO;
     public List<LoginLog> getLoginLog(Long userId) {

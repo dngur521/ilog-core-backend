@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,13 +21,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
 /**
- * React 프론트엔드와 외부 요약 서버(AI 서버) 간의 통신을 중개하는 컨트롤러입니다.
- * 오디오 파일을 받아 AI 서버로 전달하고, 그 결과를 다시 프론트엔드로 반환합니다.
- * 요약 재시도 기능도 처리합니다.
+ * React 프론트엔드와 외부 요약 서버(AI 서버) 간의 통신을 중개하는 컨트롤러입니다. 오디오 파일을 받아 AI 서버로 전달하고, 그
+ * 결과를 다시 프론트엔드로 반환합니다. 요약 재시도 기능도 처리합니다.
  */
 @RestController
-// @CrossOrigin(origins = "*")
 public class SummaryController {
+
     // 외부 STT/요약 서버의 주소 (Windows 서버)
     private static final String AI_SERVER_URL = "http://192.168.0.5:8081";
 
@@ -36,8 +34,8 @@ public class SummaryController {
     private final WebClient webClient;
 
     /**
-     * 생성자.
-     * WebClient를 초기화하며, 외부 서버와의 통신 타임아웃을 10분으로 설정합니다.
+     * 생성자. WebClient를 초기화하며, 외부 서버와의 통신 타임아웃을 10분으로 설정합니다.
+     *
      * @param webClientBuilder Spring Boot가 자동으로 주입해주는 WebClient 빌더
      */
     public SummaryController(WebClient.Builder webClientBuilder) {
@@ -50,6 +48,7 @@ public class SummaryController {
                 .baseUrl(AI_SERVER_URL) // 기본 URL 설정
                 .build();
     }
+
     /*
     *
     * TODO: 간단 요약 API 엔드포인트 생성 및 AI 서버 엔드포인트(/summary)로 데이터 전송 및 받아오기
@@ -58,7 +57,7 @@ public class SummaryController {
 
     /**
      * React로부터 5분 단위 또는 최종 오디오 청크를 받아 AI 서버로 전달합니다.
-     * 
+     *
      * @param meetingId  회의 세션 전체를 식별하는 고유 ID
      * @param startTime  회의 시작 시간 (최종 요약 시 사용)
      * @param isFinal    이 청크가 마지막인지 여부 (true/false)
@@ -124,10 +123,11 @@ public class SummaryController {
     }
 
     /**
-     * React 프론트엔드로부터 요약 재시도 요청을 받아 외부 AI 서버로 전달합니다.
-     * (React에서 isRetry: true와 함께 JSON으로 전송)
-     * 
-     * @param retryRequest 프론트엔드에서 전송한 JSON 데이터 (startTime, transcriptId, isRetry 포함)
+     * React 프론트엔드로부터 요약 재시도 요청을 받아 외부 AI 서버로 전달합니다. (React에서 isRetry: true와 함께
+     * JSON으로 전송)
+     *
+     * @param retryRequest 프론트엔드에서 전송한 JSON 데이터 (startTime, transcriptId,
+     * isRetry 포함)
      * @return 재시도된 요약 결과 또는 오류 정보가 담긴 ResponseEntity
      */
     @PostMapping("/summaries/retry")
@@ -167,14 +167,13 @@ public class SummaryController {
         }
     }
 
-
     // --- DTO (Data Transfer Object) 클래스들 ---
     // API 간 데이터 교환을 위한 구조화된 객체들입니다.
-
     /**
      * React 프론트엔드로 최종 응답을 보낼 때 사용하는 DTO 클래스입니다.
      */
     public static class SummarizeResponse {
+
         private String summary; // 요약 결과 텍스트
         private String error; // 오류 메시지 (성공 시 null)
         private String transcriptId; // 재시도에 사용될 스크립트 ID (실패 시 반환될 수 있음)
@@ -185,45 +184,86 @@ public class SummaryController {
             this.error = error;
             this.transcriptId = transcriptId;
         }
-        public String getSummary() { return summary; }
-        public String getError() { return error; }
-        public String getTranscriptId() { return transcriptId; }
+
+        public String getSummary() {
+            return summary;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public String getTranscriptId() {
+            return transcriptId;
+        }
     }
 
     /**
      * 외부 서버(AI 서버)로부터 응답을 받을 때 사용하는 DTO 클래스입니다.
      */
     public static class AIResponse {
+
         private String text; // 외부 서버에서는 요약 결과를 'text' 필드로 반환한다고 가정
         private String error;
         private String transcriptId;
 
         // 기본 생성자, Getter, Setter 메소드 ...
-        public AIResponse() {}
-        public String getText() { return text; }
-        public void setText(String text) { this.text = text; }
-        public String getError() { return error; }
-        public void setError(String error) { this.error = error; }
-        public String getTranscriptId() { return transcriptId; }
-        public void setTranscriptId(String transcriptId) { this.transcriptId = transcriptId; }
+        public AIResponse() {
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+
+        public String getTranscriptId() {
+            return transcriptId;
+        }
+
+        public void setTranscriptId(String transcriptId) {
+            this.transcriptId = transcriptId;
+        }
     }
 
     /**
      * React 프론트엔드로부터 재시도 요청을 받을 때 사용하는 DTO 클래스입니다.
      */
     public static class RetryRequest {
+
         private String startTime; // 회의 시작 시간
         private String transcriptId; // 재시도 대상 스크립트 ID
         private boolean isRetry; // ⬅️ React에서 추가한 필드를 받기 위해 추가
 
         // Getter, Setter 메소드 ...
-        public String getStartTime() { return startTime; }
-        public void setStartTime(String startTime) { this.startTime = startTime; }
+        public String getStartTime() {
+            return startTime;
+        }
+
+        public void setStartTime(String startTime) {
+            this.startTime = startTime;
+        }
+
         public String getTranscriptId() {
             return transcriptId;
         }
-        public boolean isRetry() { return isRetry; } // boolean 타입의 Getter는 is*로 시작하는 것이 관례
-        public void setTranscriptId(String transcriptId) { this.transcriptId = transcriptId; }
+
+        public boolean isRetry() {
+            return isRetry;
+        } // boolean 타입의 Getter는 is*로 시작하는 것이 관례
+
+        public void setTranscriptId(String transcriptId) {
+            this.transcriptId = transcriptId;
+        }
     }
 }
-

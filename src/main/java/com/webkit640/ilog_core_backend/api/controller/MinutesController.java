@@ -31,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/minutes")
 public class MinutesController {
+
     //--------------회의록------------------
     private final MinutesService minutesService;
     private final MinutesMapper minutesMapper;
@@ -41,70 +42,76 @@ public class MinutesController {
             @PathVariable("folderId") Long folderId,
             @RequestBody MinutesRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
-            ){
+    ) {
         Long ownerId = owner.getId();
         Minutes minutes = minutesService.createMinutes(folderId, request, ownerId);
         return ResponseEntity.ok(minutesMapper.toCreate(minutes));
     }
+
     //회의록 본문 조회
     @GetMapping("/{minutesId}")
     public ResponseEntity<MinutesResponse.FindContent> findContentMinutes(
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails user
-    ){
+    ) {
         Long userId = user.getId();
         Minutes minutes = minutesService.getMinutes(minutesId, userId);
         return ResponseEntity.ok(minutesMapper.toFindContent(minutes));
     }
+
     //회의록 요약 조회
     @GetMapping("/{minutesId}/summary")
     public ResponseEntity<MinutesResponse.FindSummary> findSummaryMinutes(
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails user
-    ){
+    ) {
         Long userId = user.getId();
         Minutes minutes = minutesService.getMinutes(minutesId, userId);
         return ResponseEntity.ok(minutesMapper.toFindSummary(minutes));
     }
+
     //회의록 수정
     @PatchMapping("/{minutesId}")
     public ResponseEntity<MinutesResponse.Update> updateMinutes(
             @PathVariable("minutesId") Long minutesId,
             @RequestBody MinutesRequest.Update request,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         Long ownerId = owner.getId();
-        Minutes minutes = minutesService.updateMinutes(minutesId ,request, ownerId);
+        Minutes minutes = minutesService.updateMinutes(minutesId, request, ownerId);
         return ResponseEntity.ok(minutesMapper.toUpdate(minutes));
     }
+
     //회의록 삭제
     @DeleteMapping("/{minutesId}")
     public ResponseEntity<Void> deleteMinutes(
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         minutesService.deleteMinutes(minutesId, owner);
         return ResponseEntity.noContent().build();
     }
 
     //---------------조원 권한 관리-----------------------------
     private final FolderParticipantMapper participantMapper;
+
     //조원 관리 추가
     @PostMapping("/{minutesId}/party")
     public ResponseEntity<ParticipantResponse.Detail> createParticipant(
             @PathVariable("minutesId") Long minutesId,
             @RequestBody ParticipantRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         List<MinutesParticipant> participants = minutesService.createParticipant(minutesId, request, owner);
         return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
     }
+
     //조원 관리 조회
     @GetMapping("{minutesId}/party")
     public ResponseEntity<ParticipantResponse.Detail> findParticipant(
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         List<MinutesParticipant> participants = minutesService.getParticipant(minutesId, owner);
         return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
     }
@@ -115,7 +122,7 @@ public class MinutesController {
             @PathVariable("minutesId") Long minutesId,
             @ModelAttribute ParticipantRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails owner
-    ){
+    ) {
         List<MinutesParticipant> participants = minutesService.deleteParticipant(minutesId, request, owner);
         return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
     }

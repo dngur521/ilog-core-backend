@@ -7,7 +7,8 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
-public class MemoLog extends CommonLog{
+public class MemoLog extends CommonLog {
+
     private Long minutesId;
     private MemoType memoType;
 }

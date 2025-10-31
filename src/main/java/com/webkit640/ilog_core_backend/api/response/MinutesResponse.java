@@ -4,17 +4,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 public class MinutesResponse {
+
     @Data
     @AllArgsConstructor
-    public static class Create{
+    public static class Create {
+
         private Long id;
         private String title;
         private String content;
         private String summary;
     }
+
     @Data
     @AllArgsConstructor
     public static class FindContent {
+
         private Long id;
         private String title;
         private String content;
@@ -23,6 +27,7 @@ public class MinutesResponse {
     @Data
     @AllArgsConstructor
     public static class FindSummary {
+
         private Long id;
         private String title;
         private String summary;
@@ -31,6 +36,7 @@ public class MinutesResponse {
     @Data
     @AllArgsConstructor
     public static class Update {
+
         private Long id;
         private String title;
         private String content;
