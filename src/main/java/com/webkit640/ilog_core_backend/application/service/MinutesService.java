@@ -117,7 +117,7 @@ public class MinutesService {
         Member owner = memberService.getMember(ownerId);
 
         if(minutes.getStatus().equals(MinutesType.MEETING)){
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
+            throw new CustomException(ErrorCode.UPDATE_DENIED);
         }
 
         //owner만 접근 가능
@@ -204,7 +204,7 @@ public class MinutesService {
         return minutesParticipantDAO.findByMinutes(minutes);
     }
 
-    //폴더에 누가 만들었는지가 있기에 폴더를 통해서 확인
+    // 폴더의 주인인지 검증
     private void identityVerification(Folder folder, Long ownerId){
         if(!folder.getOwner().getId().equals(ownerId)){
             throw new CustomException(ErrorCode.ACCESS_DENIED);
@@ -217,10 +217,10 @@ public class MinutesService {
                 .anyMatch(mp ->
                         mp.getParticipant().getId().equals(userId));
         if (!isParticipant) {
-            throw new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND);
+            throw new CustomException(ErrorCode.VIEW_DENIED);
         }
     }
-    //접근 권한이 있는지 확인 ver회의록
+    //회의록 접근 권한이 있는지 확인
     private void participantVerification(Minutes minutes, Long userId){
         boolean hasAccess = minutes.getMinutesParticipants().stream().anyMatch(
                 fp->fp.getParticipant().getId().equals(userId));

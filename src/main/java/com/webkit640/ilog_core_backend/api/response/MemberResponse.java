@@ -1,29 +1,39 @@
 package com.webkit640.ilog_core_backend.api.response;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 public class MemberResponse {
+    @Data
+    @AllArgsConstructor
+    public static class Create{
+        private Long memberId;
+        private String email;
+        private String name;
+        private String phoneNum;
+        private LocalDateTime joinedAt;
+        private Long rootFolderId;
+        private String profileImage;
+    }
 
     @Data
     @AllArgsConstructor
-    public static class Detail {
-
+    public static class Detail{
         private Long memberId;
         private String email;
         private String name;
         private String phoneNum;
         private LocalDateTime joinedAt;
         private List<FolderSummary> folders;
+        private String profileImage;
     }
 
     @Data
     @AllArgsConstructor
-    public static class FolderSummary {
-
+    public static class FolderSummary{
         private Long id;
         private String name;
         private LocalDateTime createdAt;
@@ -31,8 +41,7 @@ public class MemberResponse {
 
     @Data
     @AllArgsConstructor
-    public static class Email {
-
+    public static class Email{
         private String email;
     }
 }

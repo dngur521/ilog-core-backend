@@ -1,38 +1,37 @@
 package com.webkit640.ilog_core_backend.application.mapper;
 
-import java.util.List;
-
-import org.springframework.stereotype.Component;
-
 import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
 import com.webkit640.ilog_core_backend.domain.model.FolderParticipant;
 import com.webkit640.ilog_core_backend.domain.model.MinutesParticipant;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
-public class FolderParticipantMapper {
-
+public class ParticipantMapper {
     // FolderParticipant → Response.Participant 변환
-    private ParticipantResponse.Participant toFolderParticipant(FolderParticipant entity) {
-        return new ParticipantResponse.Participant(
+    private ParticipantResponse.FolderParticipant toFolderParticipant(FolderParticipant entity) {
+        return new ParticipantResponse.FolderParticipant(
                 entity.getId(),
                 entity.getFolder().getId(),
-                entity.getParticipant().getId()
+                entity.getParticipant().getId(),
+                entity.getParticipant().getName()
         );
     }
 
-    private ParticipantResponse.Participant toMinutesParticipant(MinutesParticipant entity) {
-        return new ParticipantResponse.Participant(
+    private ParticipantResponse.MinutesParticipant toMinutesParticipant(MinutesParticipant entity) {
+        return new ParticipantResponse.MinutesParticipant(
                 entity.getId(),
                 entity.getMinutes().getId(),
-                entity.getParticipant().getId()
+                entity.getParticipant().getId(),
+                entity.getParticipant().getName()
         );
     }
-
-    public ParticipantResponse.Detail toFolderDetail(List<FolderParticipant> folderParticipantList) {
-        List<ParticipantResponse.Participant> participants = folderParticipantList.stream()
+    public ParticipantResponse.Detail<ParticipantResponse.FolderParticipant> toFolderDetail(List<FolderParticipant> folderParticipantList) {
+        List<ParticipantResponse.FolderParticipant> participants = folderParticipantList.stream()
                 .map(this::toFolderParticipant)
                 .toList();
-        return new ParticipantResponse.Detail(participants);
+        return new ParticipantResponse.Detail<>(participants);
     }
 
 //    public ParticipantResponse.Detail toFolderDelete(List<FolderParticipant> folderParticipantList) {
@@ -41,11 +40,12 @@ public class FolderParticipantMapper {
 //                .toList();
 //        return new ParticipantResponse.Detail(participants);
 //    }
-    public ParticipantResponse.Detail toMinutesDetail(List<MinutesParticipant> minutesParticipantList) {
-        List<ParticipantResponse.Participant> participants = minutesParticipantList.stream()
+
+    public ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant> toMinutesDetail(List<MinutesParticipant> minutesParticipantList) {
+        List<ParticipantResponse.MinutesParticipant> participants = minutesParticipantList.stream()
                 .map(this::toMinutesParticipant)
                 .toList();
-        return new ParticipantResponse.Detail(participants);
+        return new ParticipantResponse.Detail<>(participants);
     }
 
 //    public ParticipantResponse.Detail toMinutesDelete(List<MinutesParticipant> minutesParticipantList) {

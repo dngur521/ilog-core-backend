@@ -1,26 +1,35 @@
 package com.webkit640.ilog_core_backend.api.response;
 
-import java.util.List;
-
+import com.webkit640.ilog_core_backend.domain.model.MinutesParticipant;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
-public class ParticipantResponse {
+import java.util.Collection;
+import java.util.List;
 
+public class ParticipantResponse {
     @Data
     @AllArgsConstructor
-    public static class Detail {
-
-        List<Participant> participants;
+    public static class Detail<T>{
+        Collection<T> participants;
     }
 
     @Data
     @AllArgsConstructor
-    public static class Participant {
-
+    public static class MinutesParticipant{
         private Long id;
-        private Long folderOrMinutesId; //에반데
+        private Long minutesId;
         private Long participantId;
+        private String participantName;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class FolderParticipant{
+        private Long id;
+        private Long folderId;
+        private Long participantId;
+        private String participantName;
     }
 
 }

@@ -33,9 +33,9 @@ public class MemberController {
 
     //회원 가입
     @PostMapping
-    public ResponseEntity<MemberResponse.Detail> registerMember(@RequestBody MemberRequest.Create request){
+    public ResponseEntity<MemberResponse.Create> registerMember(@RequestBody MemberRequest.Create request){
         Member member = memberService.registerMember(request);
-        return ResponseEntity.ok(memberMapper.toDetail(member));
+        return ResponseEntity.ok(memberMapper.toCreate(member));
     }
 
     //회원 조회 // 본인 확인 미완
@@ -45,7 +45,7 @@ public class MemberController {
     ){
         Long currentMemberId = currentMember.getId();
         Member member = memberService.getMember(currentMemberId);
-        return ResponseEntity.ok(memberMapper.toDetail(member));
+        return ResponseEntity.ok(memberMapper.toFind(member));
     }
 
     //회원 수정
@@ -56,7 +56,7 @@ public class MemberController {
     ){
         Long currentMemberId = currentMember.getId();
         Member member = memberService.updateMember(request,currentMemberId);
-        return ResponseEntity.ok(memberMapper.toDetail(member));
+        return ResponseEntity.ok(memberMapper.toFind(member));
     }
 
     //회원 삭제
@@ -94,6 +94,6 @@ public class MemberController {
         @RequestBody MemberRequest.Reset request
     ){
         Member member = memberService.resetPassword(request);
-        return ResponseEntity.ok(memberMapper.toDetail(member));
+        return ResponseEntity.ok(memberMapper.toFind(member));
     }
 }

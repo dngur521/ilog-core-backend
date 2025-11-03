@@ -137,17 +137,19 @@ public class FolderService {
 
     //폴더 삭제
     @Transactional
-    public Folder deleteFolder(Long folderId, CustomUserDetails owner) {
+    public void deleteFolder(Long folderId, CustomUserDetails owner) {
         Folder folder = getFolder(folderId);
 
         //-------------------본인 인증-------------------
         identityVerification(folder, owner.getId());
+        //------------ 본인의 루트 폴더인지 확인 -------------
+        if(folder.getOwner().getRootFolderId().equals(folder.getId())){
+            throw new CustomException(ErrorCode.ROOT_FOLDER_DELETE_DENIED);
+        }
         //-------------------재귀적으로 삭제-------------------
         folderDAO.delete(folder);
         //------------------- 로그 -------------------
         folderLogging(owner.getId(), owner.getUsername(),LocalDateTime.now(),folder.getId(),ActionType.DELETE,"정상 삭제");
-        
-        return folder;
     }
 
     //폴더가 있는지 확인
@@ -229,7 +231,7 @@ public class FolderService {
                 .anyMatch(fp ->
                         fp.getParticipant().getId().equals(userId));
         if (!isParticipant) {
-            throw new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND);
+            throw new CustomException(ErrorCode.VIEW_DENIED);
         }
     }
 

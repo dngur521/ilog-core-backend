@@ -18,7 +18,7 @@ import com.webkit640.ilog_core_backend.api.request.MinutesRequest;
 import com.webkit640.ilog_core_backend.api.request.ParticipantRequest;
 import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
-import com.webkit640.ilog_core_backend.application.mapper.FolderParticipantMapper;
+import com.webkit640.ilog_core_backend.application.mapper.ParticipantMapper;
 import com.webkit640.ilog_core_backend.application.mapper.MinutesMapper;
 import com.webkit640.ilog_core_backend.application.service.MinutesService;
 import com.webkit640.ilog_core_backend.domain.model.Minutes;
@@ -88,7 +88,7 @@ public class MinutesController {
     }
 
     //---------------조원 권한 관리-----------------------------
-    private final FolderParticipantMapper participantMapper;
+    private final ParticipantMapper participantMapper;
     //조원 관리 추가
     @PostMapping("/{minutesId}/party")
     public ResponseEntity<ParticipantResponse.Detail> createParticipant(

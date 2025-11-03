@@ -99,7 +99,7 @@ public class MemoService {
     //------------ 누가 메모를 만들었는지 검증 ----------------
     private void identityVerification(Memo memo, Long ownerId){
         if(!memo.getMember().getId().equals(ownerId)){
-            throw new CustomException(ErrorCode.ACCESS_DENIED);
+            throw new CustomException(ErrorCode.UPDATE_DENIED);
         }
     }
 
