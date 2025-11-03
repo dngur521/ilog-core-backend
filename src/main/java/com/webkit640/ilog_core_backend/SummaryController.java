@@ -68,7 +68,7 @@ public class SummaryController {
         try {
             // 1. WebClient를 사용하여 외부 AI 서버의 /summary 엔드포인트 호출
             AIResponse aiResponse = this.webClient.post()
-                    .uri("/summary") // 외부 서버의 단순 요약 엔드포인트
+                    .uri("/ai/summaries/simple") // 외부 서버의 단순 요약 엔드포인트
                     // FastAPI의 Form Data (@Form)에 맞게 Content-Type을 설정합니다.
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     // MultiValueMap을 사용하여 form-urlencoded 본문을 전송합니다.
@@ -135,9 +135,9 @@ public class SummaryController {
             }
             MultiValueMap<String, HttpEntity<?>> multipartBody = bodyBuilder.build();
 
-            // AI 서버의 엔드포인트(/process-audio-chunk) 호출
+            // AI 서버의 엔드포인트 호출
             AIResponse sttResponse = this.webClient.post()
-                    .uri("/process-audio-chunk") // [수정] Desktop의 새 엔드포인트
+                    .uri("/ai/summaries/audio")
                     .contentType(MediaType.MULTIPART_FORM_DATA)
                     .body(BodyInserters.fromMultipartData(multipartBody))
                     .retrieve()
@@ -181,7 +181,7 @@ public class SummaryController {
             // 1. WebClient를 사용하여 외부 STT 서버의 재시도 엔드포인트 호출
             //    이번에는 JSON 형식으로 요청 본문을 전송합니다.
             AIResponse sttResponse = this.webClient.post()
-                    .uri("/retry-final-summary") // 외부 서버의 재시도 엔드포인트
+                    .uri("/ai/summaries/retry") // 외부 서버의 재시도 엔드포인트
                     .contentType(MediaType.APPLICATION_JSON) // 요청 타입은 JSON
                     .bodyValue(retryRequest) // RetryRequest DTO를 JSON 본문으로 설정
                     .retrieve()
@@ -207,6 +207,75 @@ public class SummaryController {
             // 오류 응답 반환 (이때 transcriptId는 유지하여 재시도 가능하도록 함)
             return ResponseEntity.internalServerError()
                     .body(new SummarizeResponse(null, "재시도 처리 중 중간 서버에서 오류가 발생했습니다.", retryRequest.getTranscriptId()));
+        }
+    }
+
+    /**
+     * [RAG] React로부터 텍스트와 meetingId를 받아 AI 서버의 /rag/index 엔드포인트로 전송합니다. (AI 서버가
+     * JSON으로 데이터를 기대합니다.)
+     *
+     * @param request React에서 전송한 JSON 데이터 (meetingId, text 포함)
+     * @return 색인 결과 또는 오류 정보가 담긴 ResponseEntity
+     */
+    @PostMapping("/rag/index")
+    public ResponseEntity<IndexResponse> handleRagIndex(@RequestBody IndexRequest request) {
+        System.out.println("RAG 색인 요청 수신 (MeetingID: " + request.getMeetingId() + ")");
+
+        try {
+            // 1. WebClient를 사용하여 외부 AI 서버의 /rag/index 엔드포인트 호출
+            //    FastAPI가 JSON을 기대하므로 .bodyValue() 사용
+            IndexResponse aiResponse = this.webClient.post()
+                    .uri("/rag/index") // AI 서버의 색인 엔드포인트
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request) // IndexRequest DTO를 JSON 본문으로 전송
+                    .retrieve()
+                    .bodyToMono(IndexResponse.class) // AI 서버 응답을 IndexResponse DTO로 받음
+                    .block(); // 동기적으로 결과 대기
+
+            System.out.println("AI 서버로부터 RAG 색인 응답 수신 완료. React로 전달.");
+
+            // 2. AI 서버 응답을 React로 그대로 반환
+            return ResponseEntity.ok(aiResponse);
+
+        } catch (Exception e) {
+            System.err.println("AI 서버 RAG 색인 통신 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(new IndexResponse(null, "RAG 색인 처리 중 서버 오류가 발생했습니다."));
+        }
+    }
+
+    /**
+     * [RAG] React로부터 meetingId와 질문(query)을 받아 AI 서버의 /rag/ask 엔드포인트로 전송합니다. (AI
+     * 서버가 JSON으로 데이터를 기대합니다.)
+     *
+     * @param request React에서 전송한 JSON 데이터 (meetingId, query 포함)
+     * @return RAG 답변 또는 오류 정보가 담긴 ResponseEntity
+     */
+    @PostMapping("/rag/ask")
+    public ResponseEntity<AskResponse> handleRagAsk(@RequestBody AskRequest request) {
+        System.out.println("RAG 질문 요청 수신 (MeetingID: " + request.getMeetingId() + ", Query: " + request.getQuery() + ")");
+
+        try {
+            // 1. WebClient를 사용하여 외부 AI 서버의 /rag/ask 엔드포인트 호출
+            AskResponse aiResponse = this.webClient.post()
+                    .uri("/rag/ask") // AI 서버의 질문 엔드포인트
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(request) // AskRequest DTO를 JSON 본문으로 전송
+                    .retrieve()
+                    .bodyToMono(AskResponse.class) // AI 서버 응답을 AskResponse DTO로 받음
+                    .block(); // 동기적으로 결과 대기
+
+            System.out.println("AI 서버로부터 RAG 답변 수신 완료. React로 전달.");
+
+            // 2. AI 서버 응답을 React로 그대로 반환
+            return ResponseEntity.ok(aiResponse);
+
+        } catch (Exception e) {
+            System.err.println("AI 서버 RAG 질문 통신 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(new AskResponse(null, "RAG 질문 처리 중 서버 오류가 발생했습니다."));
         }
     }
 
@@ -317,10 +386,140 @@ public class SummaryController {
 
         public boolean isRetry() {
             return isRetry;
-        } // boolean 타입의 Getter는 is*로 시작하는 것이 관례
+        }
 
         public void setTranscriptId(String transcriptId) {
             this.transcriptId = transcriptId;
         }
     }
+
+    // --- RAG 통신을 위한 DTO 클래스들 ---
+    /**
+     * React -> Spring Boot로 RAG 색인 요청을 보낼 때 사용하는 DTO. (AI 서버의 IndexRequest와 동일한
+     * 구조)
+     */
+    public static class IndexRequest {
+
+        private String meeting_id;
+        private String text;
+
+        // Getter, Setter
+        public String getMeetingId() {
+            return meeting_id;
+        }
+
+        public void setMeetingId(String meeting_id) {
+            this.meeting_id = meeting_id;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public void setText(String text) {
+            this.text = text;
+        }
+    }
+
+    /**
+     * Spring Boot -> React로 RAG 색인 결과를 반환할 때 사용하는 DTO. (AI 서버의 IndexResponse와
+     * 동일한 구조)
+     */
+    public static class IndexResponse {
+
+        private String message;
+        private String error;
+
+        // 기본 생성자 (JSON Deserialization을 위해 필요할 수 있음)
+        public IndexResponse() {
+        }
+
+        // 모든 필드를 받는 생성자
+        public IndexResponse(String message, String error) {
+            this.message = message;
+            this.error = error;
+        }
+
+        // Getter, Setter
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+    }
+
+    /**
+     * React -> Spring Boot로 RAG 질문 요청을 보낼 때 사용하는 DTO. (AI 서버의 AskRequest와 동일한
+     * 구조)
+     */
+    public static class AskRequest {
+
+        private String meeting_id;
+        private String query;
+
+        // Getter, Setter
+        public String getMeetingId() {
+            return meeting_id;
+        }
+
+        public void setMeetingId(String meeting_id) {
+            this.meeting_id = meeting_id;
+        }
+
+        public String getQuery() {
+            return query;
+        }
+
+        public void setQuery(String query) {
+            this.query = query;
+        }
+    }
+
+    /**
+     * Spring Boot -> React로 RAG 질문 답변을 반환할 때 사용하는 DTO. (AI 서버의 AskResponse와 동일한
+     * 구조)
+     */
+    public static class AskResponse {
+
+        private String answer;
+        private String error;
+
+        // 기본 생성자
+        public AskResponse() {
+        }
+
+        // 모든 필드를 받는 생성자
+        public AskResponse(String answer, String error) {
+            this.answer = answer;
+            this.error = error;
+        }
+
+        // Getter, Setter
+        public String getAnswer() {
+            return answer;
+        }
+
+        public void setAnswer(String answer) {
+            this.answer = answer;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+    }
+    // --- SummaryController 클래스 끝 ---
 }
