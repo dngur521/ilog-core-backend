@@ -6,17 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 public class MeetingRequest {
-
-    @Data
-    public static class Join {
-
-        @NotBlank
-        private String meetingAddress;
-    }
-
     @Data
     public static class End {
-
         @NotBlank
         private Long folderId;
         private String title;

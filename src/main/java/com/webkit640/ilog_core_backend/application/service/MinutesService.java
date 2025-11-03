@@ -3,6 +3,7 @@ package com.webkit640.ilog_core_backend.application.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.webkit640.ilog_core_backend.SummaryController;
 import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import com.webkit640.ilog_core_backend.application.mapper.MinutesMapper;
 import com.webkit640.ilog_core_backend.domain.model.*;
@@ -28,6 +29,7 @@ public class MinutesService {
     private final PermissionPropagationService permissionPropagationService;
     private final MinutesMapper minutesMapper;
     private final MemoDAO memoDAO;
+    private final SummaryController summaryController;
     //회의록 생성(주인만)
     @Transactional
     public Minutes createMinutes(Long folderId, MinutesRequest.Create request, Long ownerId) {
@@ -41,14 +43,13 @@ public class MinutesService {
         minutes.setTitle(request.getTitle());
 
         //화상회의로 생긴 결과인지 아닌지 판별
-        if(request.getStatus().equals(MinutesType.MEETING)) {
-            minutes.setContent("본문 넣기, 화상회의의 결과");
-        }else{
-            minutes.setContent(request.getContent());
-        }
+        minutes.setContent(request.getContent());
 
         //------------------------ ai에게 받아야함 ----------------------------
-        minutes.setSummary("Ai가 요약한 값을 넣기");
+        SummaryController.SimpleSummaryRequest summaryRequest = new SummaryController.SimpleSummaryRequest();
+        summaryRequest.setText(minutes.getContent());
+        String summarize = summaryController.handleSimpleSummary(summaryRequest).getBody().getSummary();
+        minutes.setSummary(summarize);
         minutes.setCreatedAt(LocalDateTime.now());
         minutes.setUpdatedAt(null);
         minutes.setStatus(request.getStatus());
@@ -62,15 +63,12 @@ public class MinutesService {
                     MinutesParticipant copy = new MinutesParticipant();
                     copy.setMinutes(minutes);
                     copy.setParticipant(mp.getParticipant());
+                    copy.setApproachedAt(LocalDateTime.now());
                     return copy;
                 }).toList();
         minutesParticipantDAO.saveAll(clonedParticipants);
-        minutes.setMinutesParticipants(clonedParticipants);
 
-        //참여일시
-        MinutesParticipant minutesParticipant = minutesParticipantDAO.findByMinutesAndParticipant(minutes,owner)
-                .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
-        minutesParticipant.setApproachedAt(LocalDateTime.now());
+        minutes.setMinutesParticipants(clonedParticipants);
 
         //--------------------------------로그-------------------------------
         minutesLogging(owner.getId(),owner.getEmail(),minutes.getCreatedAt(),minutes.getId(),ActionType.CREATE,"정상 생성");
@@ -92,6 +90,8 @@ public class MinutesService {
         MinutesParticipant minutesParticipant = minutesParticipantDAO.findByMinutesAndParticipant(minutes,participant)
                 .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
         minutesParticipant.setApproachedAt(LocalDateTime.now());
+
+        minutesParticipantDAO.save(minutesParticipant);
 
         //----------------------- 회의록 리턴 -----------------------
         return minutes;
@@ -132,7 +132,10 @@ public class MinutesService {
         }
 
         //-----------------------회의록 재요약 해야함-------------------------------
-        //minutes.setSummary(요약본);
+        SummaryController.SimpleSummaryRequest summaryRequest = new SummaryController.SimpleSummaryRequest();
+        summaryRequest.setText(minutes.getContent());
+        String summarize = summaryController.handleSimpleSummary(summaryRequest).getBody().getSummary();
+        minutes.setSummary(summarize);
         minutes.setUpdatedAt(LocalDateTime.now());
 
         minutesDAO.save(minutes);

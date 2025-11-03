@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class MemberService {
+    private final FileService fileService;
     private final MemberDAO memberDAO;
     private final FolderDAO folderDAO;
     private final FolderParticipantDAO folderParticipantDAO;
@@ -31,7 +33,7 @@ public class MemberService {
 
     @Transactional
     //회원 가입
-    public Member registerMember(MemberRequest.Create request){
+    public Member registerMember(MemberRequest.Create request, MultipartFile profileImage){
         //-------------------이메일 중복 체크-------------------
         checkDuplicateEmail(request.getEmail());
 
@@ -49,8 +51,11 @@ public class MemberService {
         member.setPhoneNum(request.getPhoneNum());
         member.setJoinedAt(LocalDateTime.now());
         member.setRootFolderId(null);
-        if(request.getProfileImage() != null && !request.getProfileImage().isEmpty()){
-            member.setProfileImage(request.getProfileImage());
+
+        //프로필 사진 수정
+        if(profileImage != null && !profileImage.isEmpty()) {
+            String uploadedUrl = fileService.upload(profileImage);
+            member.setProfileImage(uploadedUrl);
         }
         memberDAO.save(member);
 
@@ -91,7 +96,7 @@ public class MemberService {
 
     //회원 정보 수정
     @Transactional
-    public Member updateMember(MemberRequest.Update request, Long currentMemberId) {
+    public Member updateMember(MemberRequest.Update request, Long currentMemberId, MultipartFile profileImage) {
         //-------------------회원 조회-------------------
         Member member = getMember(currentMemberId);
 
@@ -114,8 +119,12 @@ public class MemberService {
         }
 
         //프로필 사진 수정
-        if(request.getProfileImage() != null && !request.getProfileImage().isEmpty()){
-            member.setProfileImage(request.getProfileImage());
+        if(profileImage != null && !profileImage.isEmpty()) {
+            if(member.getProfileImage() != null && !member.getProfileImage().isBlank()){
+                fileService.delete(member.getProfileImage());
+            }
+            String uploadedUrl = fileService.upload(profileImage);
+            member.setProfileImage(uploadedUrl);
         }
         //-------------------수정된 내용 DB에 반영-------------------
         memberDAO.save(member);
@@ -132,7 +141,8 @@ public class MemberService {
         if(!member.getId().equals(currentMemberId)){
             throw new CustomException(ErrorCode.UNAUTHORIZED_DELETE);
         }
-
+        //---------------------이미지 삭제--------------------
+        fileService.delete(member.getProfileImage());
         //-------------------회원 삭제 DB 반영-------------------
         memberDAO.delete(member);
     }
@@ -185,5 +195,4 @@ public class MemberService {
 
         return member;
     }
-
 }

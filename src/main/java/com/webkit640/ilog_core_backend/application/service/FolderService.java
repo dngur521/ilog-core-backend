@@ -26,22 +26,24 @@ import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FolderService {
-    private final FolderDAO folderDAO;
+    private final FileService fileService;
     private final MemberService memberService;
+    private final PermissionPropagationService permissionPropagationService;
+    private final FolderDAO folderDAO;
     private final MinutesDAO minutesDAO;
     private final FolderParticipantDAO folderParticipantDAO;
     private final FolderMapper folderMapper;
     private final FolderLogDAO folderLogDAO;
-    private final PermissionPropagationService permissionPropagationService;
 
     //폴더 생성
     @Transactional
-    public Folder createFolder(Long folderId, FolderRequest.Create request, Long ownerId) {
+    public Folder createFolder(Long folderId, FolderRequest.Create request, Long ownerId, MultipartFile folderImage) {
         Folder folder = getFolder(folderId);
         Member owner = memberService.getMember(ownerId);
 
@@ -56,6 +58,7 @@ public class FolderService {
                             FolderParticipant copy = new FolderParticipant();
                             copy.setFolder(newFolder);
                             copy.setParticipant(fp.getParticipant());
+                            copy.setApproachedAt(LocalDateTime.now());
                             return copy;
                         }).toList();
 
@@ -68,16 +71,13 @@ public class FolderService {
         newFolder.setCreatedAt(LocalDateTime.now());
         newFolder.setUpdatedAt(null);
 
-        if(request.getImageUrl() != null && !request.getImageUrl().isBlank()){
-            newFolder.setImageUrl(request.getImageUrl());
+        //폴더 사진 생성
+        if(folderImage != null && !folderImage.isEmpty()) {
+            String uploadedUrl = fileService.upload(folderImage);
+            newFolder.setFolderImage(uploadedUrl);
         }
 
         folderDAO.save(newFolder);
-
-        //참여일시
-        FolderParticipant folderParticipant = folderParticipantDAO.findByFolderAndParticipant(folder,owner)
-                .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
-        folderParticipant.setApproachedAt(LocalDateTime.now());
 
         //------------------------ 로그 -------------------------
         folderLogging(owner.getId(),owner.getEmail(),folder.getCreatedAt(),folder.getId(), ActionType.CREATE,"정상 생성");
@@ -99,13 +99,17 @@ public class FolderService {
         FolderParticipant folderParticipant = folderParticipantDAO.findByFolderAndParticipant(folder,participant)
                 .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
         folderParticipant.setApproachedAt(LocalDateTime.now());
+        folderParticipantDAO.save(folderParticipant);
 
-        return folderMapper.toFind(folder, childFolders, minutesList);
+        Folder refreshed = folderDAO.findByIdWithParticipantsAndChildren(folderId)
+                .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
+
+        return folderMapper.toFind(refreshed, childFolders, minutesList, participant);
     }
 
     //폴더 수정
     @Transactional
-    public Folder updateFolder(Long folderId, FolderRequest.Update request, Long ownerId) {
+    public Folder updateFolder(Long folderId, FolderRequest.Update request, Long ownerId, MultipartFile folderImage) {
         Folder folder = getFolder(folderId);
         Member owner = memberService.getMember(ownerId);
         //-------------------본인 인증-------------------
@@ -114,8 +118,13 @@ public class FolderService {
         if(request.getFolderName() != null && !request.getFolderName().isBlank()){
             folder.setFolderName(request.getFolderName());
         }
-        if(request.getImageUrl() != null && !request.getImageUrl().isBlank()){
-            folder.setImageUrl(request.getImageUrl());
+        //폴더 사진 수정
+        if(folderImage != null && !folderImage.isEmpty()) {
+            if(folder.getFolderImage() != null && !folder.getFolderImage().isBlank()){
+                fileService.delete(folder.getFolderImage());
+            }
+            String uploadedUrl = fileService.upload(folderImage);
+            folder.setFolderImage(uploadedUrl);
         }
         //변경 사항이 있을 때만
         if(request.getFolderName() != null || request.getImageUrl() != null){
@@ -147,7 +156,7 @@ public class FolderService {
             throw new CustomException(ErrorCode.ROOT_FOLDER_DELETE_DENIED);
         }
         //-------------------재귀적으로 삭제-------------------
-        folderDAO.delete(folder);
+        deleteFolderRecursively(folder);
         //------------------- 로그 -------------------
         folderLogging(owner.getId(), owner.getUsername(),LocalDateTime.now(),folder.getId(),ActionType.DELETE,"정상 삭제");
     }
@@ -171,6 +180,18 @@ public class FolderService {
         if(!hasAccess){
             throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
+    }
+
+    private void deleteFolderRecursively(Folder folder){
+        if(folder.getFolderImage() != null && !folder.getFolderImage().isBlank()){
+            log.warn(folder.getFolderImage());
+            fileService.delete(folder.getFolderImage());
+        }
+        for(Folder child : folder.getChildFolders()){
+            deleteFolderRecursively(child);
+        }
+
+        folderDAO.delete(folder);
     }
 
     //-----------------------------------------권한---------------------------------------

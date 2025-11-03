@@ -33,7 +33,8 @@ public enum ErrorCode {
     MINUTES_NOT_MATCH(HttpStatus.UNAUTHORIZED,"회의록이 일치하지 않습니다."),
     PERMISSION_SELF_DELETE_DENIED(HttpStatus.BAD_REQUEST,"자신의 권한을 삭제 할 수 없습니다."),
     ROOT_FOLDER_DELETE_DENIED(HttpStatus.BAD_REQUEST,"자신의 루트 프로젝트를 삭제 할 수 없습니다."),
-
+    FILE_UPLOAD_FAIL(HttpStatus.BAD_REQUEST,"파일을 업로드 할 수 없습니다."),
+    FILE_DELETE_FAIL(HttpStatus.BAD_REQUEST,"파일 이미지를 삭제 할 수 없습니다."),
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR,"서버 오류가 발생했습니다.");
 
     private final HttpStatus status;

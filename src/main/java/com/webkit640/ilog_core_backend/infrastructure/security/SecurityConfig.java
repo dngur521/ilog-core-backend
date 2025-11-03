@@ -107,6 +107,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/summaries/audio").permitAll()
                 .requestMatchers(HttpMethod.POST, "/summaries/retry").permitAll()
                 .requestMatchers(HttpMethod.POST, "/summaries/simple").permitAll()
+                .requestMatchers(HttpMethod.POST, "/rag/index").permitAll()
+                .requestMatchers(HttpMethod.POST, "/rag/ask").permitAll()
                 .requestMatchers(HttpMethod.GET, "/members").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/members").authenticated()
                 .requestMatchers("/members/**").authenticated()

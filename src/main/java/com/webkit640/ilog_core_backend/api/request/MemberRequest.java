@@ -17,14 +17,12 @@ public class MemberRequest {
         private String password;
         @NotBlank
         private String checkPassword;
-        private String profileImage;
     }
     @Data
     public static class Update{
         private String name;
         private String newPassword;
         private String checkPassword;
-        private String profileImage;
     }
     @Data
     public static class PhoneNum{

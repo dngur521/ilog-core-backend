@@ -400,16 +400,16 @@ public class SummaryController {
      */
     public static class IndexRequest {
 
-        private String meeting_id;
+        private String meetingId;
         private String text;
 
         // Getter, Setter
         public String getMeetingId() {
-            return meeting_id;
+            return meetingId;
         }
 
-        public void setMeetingId(String meeting_id) {
-            this.meeting_id = meeting_id;
+        public void setMeetingId(String meetingId) {
+            this.meetingId = meetingId;
         }
 
         public String getText() {
@@ -464,16 +464,16 @@ public class SummaryController {
      */
     public static class AskRequest {
 
-        private String meeting_id;
+        private String meetingId;
         private String query;
 
         // Getter, Setter
         public String getMeetingId() {
-            return meeting_id;
+            return meetingId;
         }
 
-        public void setMeetingId(String meeting_id) {
-            this.meeting_id = meeting_id;
+        public void setMeetingId(String meetingId) {
+            this.meetingId = meetingId;
         }
 
         public String getQuery() {

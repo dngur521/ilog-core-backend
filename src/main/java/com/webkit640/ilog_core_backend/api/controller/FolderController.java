@@ -2,17 +2,10 @@ package com.webkit640.ilog_core_backend.api.controller;
 
 import java.util.List;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.webkit640.ilog_core_backend.api.request.FolderRequest;
 import com.webkit640.ilog_core_backend.api.request.ParticipantRequest;
@@ -26,6 +19,7 @@ import com.webkit640.ilog_core_backend.domain.model.FolderParticipant;
 import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequiredArgsConstructor
@@ -35,14 +29,15 @@ public class FolderController {
     private final FolderService folderService;
     //----------------폴더-------------------
     //폴더 생성
-    @PostMapping("/{folderId}")
+    @PostMapping(value = "/{folderId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FolderResponse.Create> createFolder(
             @PathVariable("folderId") Long folderId,
-            @RequestBody FolderRequest.Create request,
+            @ModelAttribute FolderRequest.Create request,
+            @RequestPart(value = "folderImage",required=false) MultipartFile folderImage,
             @AuthenticationPrincipal CustomUserDetails owner
             ){
         Long ownerId = owner.getId();
-        Folder folder = folderService.createFolder(folderId, request,ownerId);
+        Folder folder = folderService.createFolder(folderId, request,ownerId, folderImage);
         return ResponseEntity.ok(folderMapper.toCreate(folder));
     }
     //폴더 이동 디렉토리 방식
@@ -57,14 +52,15 @@ public class FolderController {
         return ResponseEntity.ok(response);
     }
     //폴더 수정
-    @PatchMapping("/{folderId}")
+    @PatchMapping(value = "/{folderId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FolderResponse.Update> updateFolder(
             @PathVariable("folderId") Long folderId,
-            @RequestBody FolderRequest.Update request,
+            @ModelAttribute FolderRequest.Update request,
+            @RequestPart(value = "folderImage",required=false) MultipartFile folderImage,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         Long ownerId = owner.getId();
-        Folder folder = folderService.updateFolder(folderId, request,ownerId);
+        Folder folder = folderService.updateFolder(folderId, request,ownerId, folderImage);
         return ResponseEntity.ok(folderMapper.toUpdate(folder));
     }
     //폴더 삭제 <- 하위 폴더 싹다 삭제 예정

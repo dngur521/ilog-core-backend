@@ -1,15 +1,10 @@
 package com.webkit640.ilog_core_backend.api.controller;
 
+import com.webkit640.ilog_core_backend.application.service.FileService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.webkit640.ilog_core_backend.api.request.MemberRequest;
 import com.webkit640.ilog_core_backend.api.response.AuthResponse;
@@ -21,20 +16,23 @@ import com.webkit640.ilog_core_backend.domain.model.Member;
 import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/members")
 @RequiredArgsConstructor
 public class MemberController {
-
     private final MemberService memberService;
     private final MemberMapper memberMapper;
     private final AuthMapper authMapper;
 
     //회원 가입
-    @PostMapping
-    public ResponseEntity<MemberResponse.Create> registerMember(@RequestBody MemberRequest.Create request){
-        Member member = memberService.registerMember(request);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<MemberResponse.Create> registerMember(
+            @ModelAttribute MemberRequest.Create request,
+            @RequestPart(value = "profileImage",required=false) MultipartFile profileImage
+    ){
+        Member member = memberService.registerMember(request, profileImage);
         return ResponseEntity.ok(memberMapper.toCreate(member));
     }
 
@@ -49,13 +47,14 @@ public class MemberController {
     }
 
     //회원 수정
-    @PatchMapping
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<MemberResponse.Detail> updateMember(
-            @RequestBody MemberRequest.Update request,
+            @ModelAttribute MemberRequest.Update request,
+            @RequestPart(value = "profileImage",required=false) MultipartFile profileImage,
             @AuthenticationPrincipal CustomUserDetails currentMember
     ){
         Long currentMemberId = currentMember.getId();
-        Member member = memberService.updateMember(request,currentMemberId);
+        Member member = memberService.updateMember(request,currentMemberId, profileImage);
         return ResponseEntity.ok(memberMapper.toFind(member));
     }
 

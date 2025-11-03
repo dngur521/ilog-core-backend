@@ -13,6 +13,7 @@ public class FolderResponse {
         private Long folderId;
         private String folderName;
         private LocalDateTime createdAt;
+        private String folderImage;
     }
     @Data
     @AllArgsConstructor
@@ -21,12 +22,14 @@ public class FolderResponse {
         private String folderName;
         private List<FolderSummary> childFolders;
         private List<MinutesSummary> minutesList;
+        private String folderImage;
     }
     @Data
     @AllArgsConstructor
     public static class FolderSummary {
         private Long id;
         private String name;
+        private LocalDateTime approachedAt;
     }
 
     @Data
@@ -34,6 +37,7 @@ public class FolderResponse {
     public static class MinutesSummary {
         private Long id;
         private String name;
+        private LocalDateTime approachedAt;
     }
 
     @Data
@@ -42,5 +46,6 @@ public class FolderResponse {
         private Long folderId;
         private String folderName;
         private LocalDateTime updatedAt;
+        private String folderImage;
     }
 }

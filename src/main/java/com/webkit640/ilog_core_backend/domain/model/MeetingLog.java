@@ -8,6 +8,4 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MeetingLog extends CommonLog {
-
-    private Long meetingId;
 }
