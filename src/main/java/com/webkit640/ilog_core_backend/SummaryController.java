@@ -225,7 +225,7 @@ public class SummaryController {
             // 1. WebClient를 사용하여 외부 AI 서버의 /rag/index 엔드포인트 호출
             //    FastAPI가 JSON을 기대하므로 .bodyValue() 사용
             IndexResponse aiResponse = this.webClient.post()
-                    .uri("/rag/index") // AI 서버의 색인 엔드포인트
+                    .uri("/ai/rag/index") // AI 서버의 색인 엔드포인트
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(request) // IndexRequest DTO를 JSON 본문으로 전송
                     .retrieve()
@@ -259,7 +259,7 @@ public class SummaryController {
         try {
             // 1. WebClient를 사용하여 외부 AI 서버의 /rag/ask 엔드포인트 호출
             AskResponse aiResponse = this.webClient.post()
-                    .uri("/rag/ask") // AI 서버의 질문 엔드포인트
+                    .uri("/ai/rag/ask") // AI 서버의 질문 엔드포인트
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(request) // AskRequest DTO를 JSON 본문으로 전송
                     .retrieve()
