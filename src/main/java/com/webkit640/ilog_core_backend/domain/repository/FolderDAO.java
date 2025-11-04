@@ -1,5 +1,6 @@
 package com.webkit640.ilog_core_backend.domain.repository;
 
+import com.webkit640.ilog_core_backend.api.response.FolderResponse;
 import com.webkit640.ilog_core_backend.domain.model.Folder;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,13 +11,14 @@ import java.util.Optional;
 
 public interface FolderDAO extends JpaRepository<Folder, Long> {
     @Query(value = """
-            SELECT f 
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, fp.approachedAt
+            )
             FROM Folder f 
-            LEFT JOIN FETCH f.folderParticipants fp 
-            LEFT JOIN FETCH fp.participant p 
+            JOIN f.folderParticipants fp 
             WHERE f.parentFolder = :folder 
             ORDER BY f.id DESC""")
-    List<Folder> findByParentFolder(@Param("folder")Folder folder);
+    List<FolderResponse.FolderSummary> findByParentFolder(@Param("folder")Folder folder);
 
     //Lazy 로딩 방지를 위해 participants를 미리 함께 조회
     @Query("""

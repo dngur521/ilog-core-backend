@@ -1,10 +1,16 @@
 package com.webkit640.ilog_core_backend.infrastructure.security;
 
 import java.security.Key;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import com.webkit640.ilog_core_backend.application.service.AuthService;
+import com.webkit640.ilog_core_backend.domain.model.ActionType;
+import com.webkit640.ilog_core_backend.domain.model.LoginLog;
+import com.webkit640.ilog_core_backend.domain.repository.LoginLogDAO;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -19,13 +25,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtTokenProvider {
 
     // 비밀키
     @Value("${security.jwt.secret}")
     private String secretBase64;
 
-    @Value("${security.jwt.access-expiration-ms:1800000}")
+    @Value("${security.jwt.access-expiration-ms:18000000}")
     private Long accessExpirationMs;
 
     @Value("${security.jwt.refresh-expiration-ms:604800000}")
@@ -44,12 +51,14 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
+    private final LoginLogDAO loginLogDAO;
+
     public String createAccessToken(Long userId, String username, List<String> roles) {
         return buildToken(userId, username, roles, "ACCESS", accessExpirationMs);
     }
 
     public String createRefreshToken(Long userId, String username) {
-        return buildToken(userId, username, List.of(), "refresh", refreshExpirationMs);
+        return buildToken(userId, username, List.of(), "REFRESH", refreshExpirationMs);
     }
 
     //토큰 생성

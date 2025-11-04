@@ -195,4 +195,13 @@ public class MemberService {
 
         return member;
     }
+
+    //현재 비밀번호 입력
+    public void inputPassword(MemberRequest.inputPassword request, Long currentMemberId) {
+        //-------------------회원 조회-------------------
+        Member member = getMember(currentMemberId);
+        if(!passwordEncoder.matches( request.getPassword(), member.getPassword())){
+            throw new CustomException(ErrorCode.CURRENT_PASSWORD_NOT_MATCH);
+        }
+    }
 }

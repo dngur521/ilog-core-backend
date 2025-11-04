@@ -2,9 +2,14 @@ package com.webkit640.ilog_core_backend.infrastructure.security;
 
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webkit640.ilog_core_backend.api.response.ErrorResponse;
+import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -32,6 +37,7 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService customUserDetailsService;
     private final TokenStoreService tokenStoreService;
+    private final ObjectMapper mapper;
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
@@ -70,12 +76,22 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
-        return (request, response, authException) -> response.setStatus(401);
+        return (request, response, authException) ->{
+            ErrorCode error = ErrorCode.UNAUTHORIZED_MEMBER;
+            response.setStatus(error.getStatus().value());
+            response.setContentType("application/json;charset=UTF-8");
+            mapper.writeValue(response.getWriter(), new ErrorResponse(error));
+        };
     }
 
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
-        return (request, response, accessDeniedException) -> response.setStatus(403);
+        return (request, response, ex) -> {
+            ErrorCode error = ErrorCode.ACCESS_DENIED;
+            response.setStatus(error.getStatus().value());
+            response.setContentType("application/json;charset=UTF-8");
+            mapper.writeValue(response.getWriter(),new ErrorResponse(error));
+        };
     }
 
     @Bean

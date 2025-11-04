@@ -46,4 +46,9 @@ public class MemberRequest {
         @NotBlank
         private String checkPassword;
     }
+    @Data
+    public static class inputPassword {
+        @NotBlank
+        private String password;
+    }
 }

@@ -17,4 +17,9 @@ public class FolderRequest {
         private String folderName;
         private String imageUrl;
     }
+
+    @Data
+    public static class Search {
+        private String minutesName;
+    }
 }

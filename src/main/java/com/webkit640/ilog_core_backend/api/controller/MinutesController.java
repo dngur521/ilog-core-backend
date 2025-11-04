@@ -46,6 +46,7 @@ public class MinutesController {
         Minutes minutes = minutesService.createMinutes(folderId, request, ownerId);
         return ResponseEntity.ok(minutesMapper.toCreate(minutes));
     }
+
     //회의록 본문 조회
     @GetMapping("/{minutesId}")
     public ResponseEntity<MinutesResponse.FindContent> findContentMinutes(
@@ -91,7 +92,7 @@ public class MinutesController {
     private final ParticipantMapper participantMapper;
     //조원 관리 추가
     @PostMapping("/{minutesId}/party")
-    public ResponseEntity<ParticipantResponse.Detail> createParticipant(
+    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant>> createParticipant(
             @PathVariable("minutesId") Long minutesId,
             @RequestBody ParticipantRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
@@ -101,7 +102,7 @@ public class MinutesController {
     }
     //조원 관리 조회
     @GetMapping("{minutesId}/party")
-    public ResponseEntity<ParticipantResponse.Detail> findParticipant(
+    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant>> findParticipant(
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
@@ -111,7 +112,7 @@ public class MinutesController {
 
     //조원 관리 삭제
     @DeleteMapping("/{minutesId}/party")
-    public ResponseEntity<ParticipantResponse.Detail> deleteParticipant(
+    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant>> deleteParticipant(
             @PathVariable("minutesId") Long minutesId,
             @ModelAttribute ParticipantRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails owner

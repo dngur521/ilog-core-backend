@@ -25,8 +25,8 @@ public class AuthController {
     public ResponseEntity<AuthResponse.Token> login(
             @RequestBody AuthRequest.Login request
     ){
-        String token = authService.login(request);
-        return ResponseEntity.ok(authMapper.toToken(token));
+        AuthResponse.Token token = authService.login(request);
+        return ResponseEntity.ok(authMapper.toToken(token.getAccessToken(),token.getRefreshToken()));
     }
     //로그아웃
     @PostMapping("/logout")
@@ -37,12 +37,12 @@ public class AuthController {
         authService.logout(request, user);
         return ResponseEntity.noContent().build();
     }
-    //재인증 <- AI 돌리고 나온거라 굳이 필요한가 싶지만 그래도!!
+    //재인증
     @PostMapping("/refresh")
     public ResponseEntity<AuthResponse.Token> refresh(
             @RequestBody AuthRequest.refresh body
             ){
-        String newAccess = authService.refresh(body.getRefreshToken());
-        return ResponseEntity.ok(new AuthResponse.Token(newAccess));
+        AuthResponse.Token token = authService.refresh(body.getRefreshToken());
+        return ResponseEntity.ok(authMapper.toToken(token.getAccessToken(),token.getRefreshToken()));
     }
 }

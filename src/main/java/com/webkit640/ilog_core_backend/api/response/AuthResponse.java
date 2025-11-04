@@ -9,5 +9,11 @@ public class AuthResponse {
     @AllArgsConstructor
     public static class Token{
         private String accessToken;
+        private String refreshToken;
+    }
+    @Data
+    @AllArgsConstructor
+    public static class ResetToken{
+        private String resetToken;
     }
 }

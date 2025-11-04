@@ -92,8 +92,8 @@ public class FolderService {
         //-------------------참여자 인증-------------------
         participantVerification(folder, userId);
         //-------------------폴더 조회-------------------
-        List<Folder> childFolders = folderDAO.findByParentFolder(folder);
-        List<Minutes> minutesList = minutesDAO.findByFolder(folder);
+        List<FolderResponse.FolderSummary> childFolders = folderDAO.findByParentFolder(folder);
+        List<FolderResponse.MinutesSummary> minutesList = minutesDAO.findByFolderAndParticipants(folder);
 
         //참여일시
         FolderParticipant folderParticipant = folderParticipantDAO.findByFolderAndParticipant(folder,participant)
@@ -161,6 +161,11 @@ public class FolderService {
         folderLogging(owner.getId(), owner.getUsername(),LocalDateTime.now(),folder.getId(),ActionType.DELETE,"정상 삭제");
     }
 
+    //원하는 파일 조회 <- 회의록 조회지만 폴더단에 넣어놨음, 이유는 폴더에서 작동을 하니까
+    public List<FolderResponse.MinutesSummary> getSearchMinutes(FolderRequest.Search request, CustomUserDetails user) {
+        return minutesDAO.findByTitleAndParticipant(request.getMinutesName(),user.getId());
+    }
+    
     //폴더가 있는지 확인
     private Folder getFolder(Long folderId){
         return folderDAO.findByIdWithParticipantsAndChildren(folderId)

@@ -18,7 +18,6 @@ public class ParticipantMapper {
                 entity.getParticipant().getName()
         );
     }
-
     private ParticipantResponse.MinutesParticipant toMinutesParticipant(MinutesParticipant entity) {
         return new ParticipantResponse.MinutesParticipant(
                 entity.getId(),
@@ -34,13 +33,6 @@ public class ParticipantMapper {
         return new ParticipantResponse.Detail<>(participants);
     }
 
-//    public ParticipantResponse.Detail toFolderDelete(List<FolderParticipant> folderParticipantList) {
-//        List<ParticipantResponse.Participant> participants = folderParticipantList.stream()
-//                .map(this::toFolderParticipant)
-//                .toList();
-//        return new ParticipantResponse.Detail(participants);
-//    }
-
     public ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant> toMinutesDetail(List<MinutesParticipant> minutesParticipantList) {
         List<ParticipantResponse.MinutesParticipant> participants = minutesParticipantList.stream()
                 .map(this::toMinutesParticipant)
@@ -48,10 +40,4 @@ public class ParticipantMapper {
         return new ParticipantResponse.Detail<>(participants);
     }
 
-//    public ParticipantResponse.Detail toMinutesDelete(List<MinutesParticipant> minutesParticipantList) {
-//        List<ParticipantResponse.Participant> participants = minutesParticipantList.stream()
-//                .map(this::toMinutesParticipant)
-//                .toList();
-//        return new ParticipantResponse.Detail(participants);
-//    }
 }

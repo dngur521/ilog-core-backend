@@ -2,6 +2,7 @@ package com.webkit640.ilog_core_backend.api.controller;
 
 import java.util.List;
 
+import com.webkit640.ilog_core_backend.domain.model.Minutes;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,7 +36,7 @@ public class FolderController {
             @ModelAttribute FolderRequest.Create request,
             @RequestPart(value = "folderImage",required=false) MultipartFile folderImage,
             @AuthenticationPrincipal CustomUserDetails owner
-            ){
+    ){
         Long ownerId = owner.getId();
         Folder folder = folderService.createFolder(folderId, request,ownerId, folderImage);
         return ResponseEntity.ok(folderMapper.toCreate(folder));
@@ -72,11 +73,21 @@ public class FolderController {
         folderService.deleteFolder(folderId, owner);
         return ResponseEntity.noContent().build();
     }
+
+    //검색어로 회의록 조회
+    @GetMapping("/search")
+    public ResponseEntity<List<FolderResponse.MinutesSummary>> searchFolder(
+            @ModelAttribute FolderRequest.Search request,
+            @AuthenticationPrincipal CustomUserDetails user
+    ){
+        List<FolderResponse.MinutesSummary> response = folderService.getSearchMinutes(request, user);
+        return ResponseEntity.ok(folderMapper.toSearch(response));
+    }
     //---------------조원 권한 관리-----------------------------
     private final ParticipantMapper participantMapper;
     //조원 관리 추가
     @PostMapping("/{folderId}/party")
-    public ResponseEntity<ParticipantResponse.Detail> createParticipant(
+    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> createParticipant(
             @PathVariable("folderId") Long folderId,
             @RequestBody ParticipantRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
@@ -87,7 +98,7 @@ public class FolderController {
 
     //조원 관리 조회
     @GetMapping("{folderId}/party")
-    public ResponseEntity<ParticipantResponse.Detail> findParticipant(
+    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> findParticipant(
             @PathVariable("folderId") Long folderId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
@@ -97,7 +108,7 @@ public class FolderController {
 
     //조원 관리 삭제
     @DeleteMapping("/{folderId}/party")
-    public ResponseEntity<ParticipantResponse.Detail> deleteParticipant(
+    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> deleteParticipant(
             @PathVariable("folderId") Long folderId,
             @ModelAttribute ParticipantRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails owner

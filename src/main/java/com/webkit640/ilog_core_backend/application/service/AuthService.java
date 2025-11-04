@@ -35,7 +35,7 @@ public class AuthService {
     private final LoginLogDAO loginLogDAO;
     private final TokenStoreService tokenStoreService;
     @Transactional
-    public String login(AuthRequest.Login request) {
+    public AuthResponse.Token login(AuthRequest.Login request) {
         //이메일로 회원인지 아닌지 파악
         Member member = memberDAO.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -48,13 +48,15 @@ public class AuthService {
         String access = jwtTokenProvider.createAccessToken(member.getId(),member.getEmail(),List.of("USER"));
         String refresh = jwtTokenProvider.createRefreshToken(member.getId(),member.getEmail());
 
+        AuthResponse.Token token = new AuthResponse.Token(access,refresh);
+
         Long refreshTtlSec = (jwtTokenProvider.getExpiration(refresh).getTime()- System.currentTimeMillis())/ 1000;
         tokenStoreService.saveRefresh(member.getId(), refresh, refreshTtlSec);
 
         //--------------------- 로그 --------------------------
         loginLogging(member.getId(), member.getEmail(),ActionType.LOGIN,"정상 로그인");
         //------------------- 응답 반환 ------------------------
-        return access;
+        return token;
     }
     @Transactional
     public void logout(HttpServletRequest request, CustomUserDetails user) {
@@ -77,17 +79,25 @@ public class AuthService {
         loginLogging(user.getId(),user.getUsername(),ActionType.LOGOUT,"정상 로그아웃");
     }
 
-    public String refresh(String refresh) {
-        if(!jwtTokenProvider.isTokenValid(refresh) || !"refresh".equals(jwtTokenProvider.getType(refresh))){
+    public AuthResponse.Token refresh(String refresh) {
+        if(!jwtTokenProvider.isTokenValid(refresh) || !"REFRESH".equals(jwtTokenProvider.getType(refresh))){
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
+
         Long userId = jwtTokenProvider.getUserId(refresh);
         String stored = tokenStoreService.getRefresh(userId);
-        if(stored == null || !stored.equals(refresh)){
+
+        if(!refresh.equals(stored))
             throw new CustomException(ErrorCode.INVALID_TOKEN);
-        }
+
         String email = jwtTokenProvider.getUsername(refresh);
-        return jwtTokenProvider.createAccessToken(userId,email, List.of("USER"));
+        String newAccess = jwtTokenProvider.createAccessToken(userId,email,List.of("USER"));
+        String newRefresh = jwtTokenProvider.createRefreshToken(userId,email);
+
+        Long ttlSec = (jwtTokenProvider.getExpiration(newRefresh).getTime() - System.currentTimeMillis()) / 1000;
+        tokenStoreService.saveRefresh(userId,newRefresh,ttlSec);
+
+        return new AuthResponse.Token(newAccess,newRefresh);
     }
 
     private void loginLogging(Long userId, String email, ActionType actionType, String description){

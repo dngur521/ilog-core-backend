@@ -1,6 +1,5 @@
 package com.webkit640.ilog_core_backend.api.controller;
 
-import com.webkit640.ilog_core_backend.application.service.FileService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -36,7 +35,7 @@ public class MemberController {
         return ResponseEntity.ok(memberMapper.toCreate(member));
     }
 
-    //회원 조회 // 본인 확인 미완
+    //회원 조회
     @GetMapping
     public ResponseEntity<MemberResponse.Detail> findMember(
             @AuthenticationPrincipal CustomUserDetails currentMember
@@ -57,6 +56,19 @@ public class MemberController {
         Member member = memberService.updateMember(request,currentMemberId, profileImage);
         return ResponseEntity.ok(memberMapper.toFind(member));
     }
+
+
+    //회원 비밀번호 입력
+    @PostMapping("/password/input")
+    public ResponseEntity<Void> inputPassword(
+            @RequestBody MemberRequest.inputPassword request,
+            @AuthenticationPrincipal CustomUserDetails currentMember
+    ){
+        Long currentMemberId = currentMember.getId();
+        memberService.inputPassword(request,currentMemberId);
+        return ResponseEntity.noContent().build();
+    }
+
 
     //회원 삭제
     @DeleteMapping("/{memberId}")
@@ -80,11 +92,11 @@ public class MemberController {
 
     //비밀번호 재설정용 계정 검증(이메일+전화번호)
     @PostMapping("/password/verify")
-    public ResponseEntity<AuthResponse.Token> verifyAccount(
+    public ResponseEntity<AuthResponse.ResetToken> verifyAccount(
             @RequestBody MemberRequest.Verify request
     ){
-        String accessToken = memberService.verifyAccount(request);
-        return ResponseEntity.ok(authMapper.toToken(accessToken));
+        String resetToken = memberService.verifyAccount(request);
+        return ResponseEntity.ok(authMapper.toResetToken(resetToken));
     }
 
     //비밀번호 찾기(새 비밀번호 저장)
