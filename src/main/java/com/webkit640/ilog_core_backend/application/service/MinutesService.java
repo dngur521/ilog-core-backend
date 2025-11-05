@@ -6,8 +6,10 @@ import java.util.List;
 import com.webkit640.ilog_core_backend.SummaryController;
 import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import com.webkit640.ilog_core_backend.application.mapper.MinutesMapper;
+import com.webkit640.ilog_core_backend.domain.event.MinutesDeletedEvent;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +32,7 @@ public class MinutesService {
     private final MinutesMapper minutesMapper;
     private final MemoDAO memoDAO;
     private final SummaryController summaryController;
+    private final ApplicationEventPublisher eventPublisher;
     //회의록 생성(주인만)
     @Transactional
     public Minutes createMinutes(Long folderId, MinutesRequest.Create request, Long ownerId) {
@@ -153,12 +156,11 @@ public class MinutesService {
 
         //----회의록 주인과 삭제할 대상이 같아야만 실행--------
         identityVerification(minutes.getFolder(), owner.getId());
-
+        //--------------------로그 남기기--------------------------------
+        eventPublisher.publishEvent(new MinutesDeletedEvent(this, minutes));
+        minutesLogging(owner.getId(),owner.getUsername(),LocalDateTime.now(),minutes.getId(),ActionType.DELETE,"정상 삭제");
         //----------------- 회의록 삭제 -----------------------------
         minutesDAO.delete(minutes);
-
-        //--------------------로그 남기기--------------------------------
-        minutesLogging(owner.getId(),owner.getUsername(),LocalDateTime.now(),minutes.getId(),ActionType.DELETE,"정상 삭제");
     }
 
     //------------------------------------권한 관리-----------------------------------------

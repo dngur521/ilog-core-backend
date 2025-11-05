@@ -26,13 +26,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         //role에 role이 없다, 나중에 만들면 써야지
         // DB의 역할 사용 (예: USER, ADMIN 등) + ROLE_ prefix 보장
-        // String roleName = member.getRole() != null ? member.getRole().name() : "USER";
+         String roleName = member.getRole() != null ? member.getRole().name() : "USER";
         // List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + roleName));
         return new CustomUserDetails(
                 member.getId(),
                 member.getEmail(),
                 member.getPassword(),
-                List.of(() -> "ROLE_USER")
+                List.of(() -> "ROLE_" + roleName)
         //authorites
         );
     }

@@ -2,6 +2,7 @@ package com.webkit640.ilog_core_backend.api.controller;
 
 import java.util.List;
 
+import com.webkit640.ilog_core_backend.domain.model.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,9 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.webkit640.ilog_core_backend.api.response.LogResponse;
 import com.webkit640.ilog_core_backend.application.mapper.LogMapper;
 import com.webkit640.ilog_core_backend.application.service.LogService;
-import com.webkit640.ilog_core_backend.domain.model.LoginLog;
-import com.webkit640.ilog_core_backend.domain.model.MeetingLog;
-import com.webkit640.ilog_core_backend.domain.model.MinutesLog;
 import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
 
 import lombok.AllArgsConstructor;
@@ -54,5 +52,35 @@ public class LogController {
         Long userId = user.getId();
         List<MinutesLog> minutesLogs = logService.getMinutesLog(userId);
         return ResponseEntity.ok(logMapper.toResponse(minutesLogs));
+    }
+
+    // 내 폴더 조회
+    @GetMapping("/folders")
+    public ResponseEntity<LogResponse.Detail> findFoldersLog(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        Long userId = user.getId();
+        List<FolderLog> folderLogs = logService.getFolderLog(userId);
+        return ResponseEntity.ok(logMapper.toResponse(folderLogs));
+    }
+
+    // 내 메모 조회
+    @GetMapping("/memos")
+    public ResponseEntity<LogResponse.Detail> findMemoLog(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        Long userId = user.getId();
+        List<MemoLog> memoLogs = logService.getMemoLog(userId);
+        return ResponseEntity.ok(logMapper.toResponse(memoLogs));
+    }
+
+    // 내 참가자 조회
+    @GetMapping("/participant")
+    public ResponseEntity<LogResponse.Detail> findParticipantLog(
+            @AuthenticationPrincipal CustomUserDetails user
+    ) {
+        Long userId = user.getId();
+        List<ParticipantLog> participantLogs = logService.getParticipantLog(userId);
+        return ResponseEntity.ok(logMapper.toResponse(participantLogs));
     }
 }

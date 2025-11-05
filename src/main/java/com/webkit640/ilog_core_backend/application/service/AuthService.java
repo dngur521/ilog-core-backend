@@ -3,6 +3,7 @@ package com.webkit640.ilog_core_backend.application.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.webkit640.ilog_core_backend.domain.model.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,10 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.webkit640.ilog_core_backend.api.exception.CustomException;
 import com.webkit640.ilog_core_backend.api.request.AuthRequest;
 import com.webkit640.ilog_core_backend.api.response.AuthResponse;
-import com.webkit640.ilog_core_backend.domain.model.ActionType;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
-import com.webkit640.ilog_core_backend.domain.model.LoginLog;
-import com.webkit640.ilog_core_backend.domain.model.Member;
 import com.webkit640.ilog_core_backend.domain.repository.LoginLogDAO;
 import com.webkit640.ilog_core_backend.domain.repository.MemberDAO;
 import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
@@ -45,7 +42,9 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
-        String access = jwtTokenProvider.createAccessToken(member.getId(),member.getEmail(),List.of("USER"));
+        RoleType roleType = member.getRole() != null ? member.getRole() : RoleType.USER;
+
+        String access = jwtTokenProvider.createAccessToken(member.getId(),member.getEmail(),List.of("ROLE_" + roleType.name()));
         String refresh = jwtTokenProvider.createRefreshToken(member.getId(),member.getEmail());
 
         AuthResponse.Token token = new AuthResponse.Token(access,refresh);
@@ -90,8 +89,11 @@ public class AuthService {
         if(!refresh.equals(stored))
             throw new CustomException(ErrorCode.INVALID_TOKEN);
 
+        Member member = memberDAO.findById(userId)
+                .orElseThrow(()-> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
         String email = jwtTokenProvider.getUsername(refresh);
-        String newAccess = jwtTokenProvider.createAccessToken(userId,email,List.of("USER"));
+        String newAccess = jwtTokenProvider.createAccessToken(userId,email,List.of("ROLE_" + member.getRole().name()));
         String newRefresh = jwtTokenProvider.createRefreshToken(userId,email);
 
         Long ttlSec = (jwtTokenProvider.getExpiration(newRefresh).getTime() - System.currentTimeMillis()) / 1000;

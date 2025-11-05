@@ -25,41 +25,4 @@ public class LogResponse {
         private LocalDateTime createdAt;
         private ActionType status;
     }
-//    @Data
-//    @AllArgsConstructor
-//    public static class Meeting{
-//        private Long id;
-//        private Long createdAt;
-//        private ActionType status;
-//    }
-//    @Data
-//    @AllArgsConstructor
-//    public static class Minutes{
-//        private Long id;
-//        private Long createdAt;
-//        private ActionType status;
-//    }
-//    @Data
-//    @AllArgsConstructor
-//    public static class Folder{
-//        private Long id;
-//        private Long createdAt;
-//        private ActionType status;
-//    }
-//    @Data
-//    @AllArgsConstructor
-//    public static class Participant{
-//        private Long id;
-//        private Long createdAt;
-//        private ActionType status;
-//    }
-//
-//    @Data
-//    @AllArgsConstructor
-//    public static class Memo{
-//        private Long id;
-//        private Long createdAt;
-//        private ActionType status;
-//    }
-
 }

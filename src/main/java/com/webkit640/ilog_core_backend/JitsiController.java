@@ -7,6 +7,7 @@ import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
@@ -20,13 +21,22 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.webkit640.ilog_core_backend.api.exception.CustomException;
+import com.webkit640.ilog_core_backend.domain.model.ActionType;
+import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
+import com.webkit640.ilog_core_backend.domain.model.MeetingLog;
+import com.webkit640.ilog_core_backend.domain.model.Member;
+import com.webkit640.ilog_core_backend.domain.repository.MeetingLogDAO;
+import com.webkit640.ilog_core_backend.domain.repository.MemberDAO;
+
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-
+import lombok.RequiredArgsConstructor;
 /**
  * Jitsi as a Service (JaaS)와의 연동을 위한 JWT(JSON Web Token)를 생성하는 컨트롤러입니다. 프론트엔드에서
  * Jitsi 회의에 참가하기 위해 필요한 인증 토큰을 발급합니다.
  */
+@RequiredArgsConstructor
 @RestController
 public class JitsiController {
 
@@ -37,6 +47,9 @@ public class JitsiController {
     // application.properties(yml) 파일에 명시된 경로의 JaaS Private Key 파일을 리소스로 주입받습니다.
     @Value("${jaas.api.key.path}")
     private Resource privateKeyResource;
+
+    private final MemberDAO memberDAO;
+    private final MeetingLogDAO meetingLogDAO;
 
     /**
      * 프론트엔드로부터 방 이름(roomName), 사용자 이름(userName) 등을 받아 Jitsi 회의 참가에 필요한 JWT를
@@ -51,7 +64,7 @@ public class JitsiController {
             // 1. 프론트엔드에서 받은 데이터 추출 (없을 경우 기본값 사용)
             String roomName = payload.getOrDefault("roomName", "*"); // room이 '*'이면 사용자가 방을 자유롭게 생성/참가 가능
             String userName = payload.getOrDefault("userName", "참가자");
-            String userEmail = payload.getOrDefault("userEmail", "email@example.com");
+            String userEmail = payload.getOrDefault("userEmail", "7777@7777");
 
             // 2. JWT의 'sub' 클레임 값 설정 (App ID)
             String sub = jaasAppId;
@@ -100,6 +113,10 @@ public class JitsiController {
 
             System.out.println("RS256 기반 최종 Jitsi JWT 발급 완료: room=" + roomName);
 
+            
+            Member user = memberDAO.findByEmail(userEmail).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+            meetingLogging(user.getId(), user.getEmail(), LocalDateTime.now(), ActionType.CREATE, "정상 생성");
+ 
             // 6. 생성된 JWT를 JSON 형태로 클라이언트에 반환
             return ResponseEntity.ok(Map.of("jwt", jwt));
         } catch (Exception e) {
@@ -131,5 +148,16 @@ public class JitsiController {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(encoded);
         return keyFactory.generatePrivate(keySpec);
+    }
+
+    private void meetingLogging(Long userId, String email, LocalDateTime createdAt, ActionType status, String description) {
+        MeetingLog meetingLog = new MeetingLog();
+        meetingLog.setUserId(userId);
+        meetingLog.setEmail(email);
+        meetingLog.setCreatedAt(createdAt);
+        meetingLog.setStatus(status);
+        meetingLog.setDescription(description);
+
+        meetingLogDAO.save(meetingLog);
     }
 }

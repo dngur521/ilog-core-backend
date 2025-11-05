@@ -2,6 +2,7 @@ package com.webkit640.ilog_core_backend.application.service;
 
 import com.webkit640.ilog_core_backend.api.exception.CustomException;
 import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class FileService {
     private static final String UPLOAD_DIR = "/home/webkit/uploads/";
@@ -22,14 +24,17 @@ public class FileService {
             if(!Files.exists(uploadPath)){
                 Files.createDirectories(uploadPath);
             }
-
+            if(file == null || file.isEmpty()){
+                throw new CustomException(ErrorCode.FILE_EMPTY);
+            }
             String safeName = Paths.get(file.getOriginalFilename()).getFileName().toString();
-            String filename = UUID.randomUUID()+ "_" + safeName;
+            String filename = UUID.randomUUID() + "_" + safeName;
 
             Path dest = uploadPath.resolve(filename);
             file.transferTo(dest.toFile());
             return "/uploads/" + filename;
         }catch(IOException e){
+            log.error("File upload failed: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.FILE_UPLOAD_FAIL);
         }
     }

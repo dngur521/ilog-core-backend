@@ -27,14 +27,17 @@ public class FolderMapper {
                 .map(f-> new FolderResponse.FolderSummary(
                         f.getId(),
                         f.getName(),
-                        f.getApproachedAt()
+                        f.getApproachedAt(),
+                        f.getCreatedAt(),
+                        f.getFolderImage()
                 ))
                 .toList();
         List<FolderResponse.MinutesSummary> minutesSummaries = minutesList.stream()
                 .map(m-> new FolderResponse.MinutesSummary(
                         m.getId(),
                         m.getName(),
-                        m.getApproachedAt()
+                        m.getApproachedAt(),
+                        m.getCreatedAt()
                 ))
                 .toList();
 
@@ -61,7 +64,8 @@ public class FolderMapper {
                 .map(m-> new FolderResponse.MinutesSummary(
                         m.getId(),
                         m.getName(),
-                        m.getApproachedAt()
+                        m.getApproachedAt(),
+                        m.getCreatedAt()
                 ))
                 .toList();
     }

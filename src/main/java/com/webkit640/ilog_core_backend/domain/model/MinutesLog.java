@@ -8,6 +8,5 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MinutesLog extends CommonLog {
-
     private Long minutesId;
 }

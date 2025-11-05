@@ -2,14 +2,11 @@ package com.webkit640.ilog_core_backend.application.service;
 
 import com.webkit640.ilog_core_backend.api.exception.CustomException;
 import com.webkit640.ilog_core_backend.api.request.MemberRequest;
-import com.webkit640.ilog_core_backend.domain.model.Folder;
-import com.webkit640.ilog_core_backend.domain.model.FolderParticipant;
+import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.FolderDAO;
 import com.webkit640.ilog_core_backend.domain.repository.FolderParticipantDAO;
 import com.webkit640.ilog_core_backend.infrastructure.security.JwtTokenProvider;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
 import com.webkit640.ilog_core_backend.domain.repository.MemberDAO;
-import com.webkit640.ilog_core_backend.domain.model.Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,7 +48,7 @@ public class MemberService {
         member.setPhoneNum(request.getPhoneNum());
         member.setJoinedAt(LocalDateTime.now());
         member.setRootFolderId(null);
-
+        member.setRole(RoleType.USER);
         //프로필 사진 수정
         if(profileImage != null && !profileImage.isEmpty()) {
             String uploadedUrl = fileService.upload(profileImage);

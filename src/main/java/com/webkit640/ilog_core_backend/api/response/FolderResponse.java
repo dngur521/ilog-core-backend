@@ -30,6 +30,8 @@ public class FolderResponse {
         private Long id;
         private String name;
         private LocalDateTime approachedAt;
+        private LocalDateTime createdAt;
+        private String folderImage;
     }
 
     @Data
@@ -38,6 +40,7 @@ public class FolderResponse {
         private Long id;
         private String name;
         private LocalDateTime approachedAt;
+        private LocalDateTime createdAt;
     }
 
     @Data

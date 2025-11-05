@@ -28,4 +28,6 @@ public class Member {
 
     private Long rootFolderId;
     private String profileImage;
+
+    private RoleType role;
 }

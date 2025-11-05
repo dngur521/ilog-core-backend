@@ -2,7 +2,6 @@ package com.webkit640.ilog_core_backend.api.controller;
 
 import java.util.List;
 
-import com.webkit640.ilog_core_backend.domain.model.Minutes;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -41,15 +40,27 @@ public class FolderController {
         Folder folder = folderService.createFolder(folderId, request,ownerId, folderImage);
         return ResponseEntity.ok(folderMapper.toCreate(folder));
     }
-    //폴더 이동 디렉토리 방식
-    @GetMapping("/{folderId}")
-    public ResponseEntity<FolderResponse.Find> findFolder(
-            @PathVariable("folderId") Long folderId,
+    
+    //루프 프로젝트 조회
+    @GetMapping
+    public ResponseEntity<FolderResponse.Find> findRootFolder(
+            @ModelAttribute FolderRequest.Order request,
             @AuthenticationPrincipal CustomUserDetails user
     ){
         Long userId = user.getId();
-        //반환값이 복합적이라 mapper를 service계층 내부에서 처리
-        FolderResponse.Find response = folderService.getFolderDetail(folderId,userId);
+        FolderResponse.Find response = folderService.getRootFolderDetail(userId, request);
+        return ResponseEntity.ok(response);
+    }
+    
+    //폴더 조회 디렉토리 방식
+    @GetMapping("/{folderId}")
+    public ResponseEntity<FolderResponse.Find> findFolder(
+            @PathVariable("folderId") Long folderId,
+            @ModelAttribute FolderRequest.Order request,
+            @AuthenticationPrincipal CustomUserDetails user
+    ){
+        Long userId = user.getId();
+        FolderResponse.Find response = folderService.getFolderDetail(folderId,userId, request);
         return ResponseEntity.ok(response);
     }
     //폴더 수정
@@ -110,7 +121,7 @@ public class FolderController {
     @DeleteMapping("/{folderId}/party")
     public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> deleteParticipant(
             @PathVariable("folderId") Long folderId,
-            @ModelAttribute ParticipantRequest.Delete request,
+            @RequestParam ParticipantRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         List<FolderParticipant> folderParticipantList = folderService.deleteParticipant(folderId, request, owner);

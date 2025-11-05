@@ -1,7 +1,9 @@
 package com.webkit640.ilog_core_backend.infrastructure.security;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -66,9 +68,9 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + ttLms);
         String jti = UUID.randomUUID().toString();
-
+        String encodedJti = Base64.getEncoder().encodeToString(jti.getBytes(StandardCharsets.UTF_8));
         return Jwts.builder()
-                .setId(jti)
+                .setId(encodedJti)
                 .setSubject(username)
                 .setIssuer(issuer)
                 .setIssuedAt(now)

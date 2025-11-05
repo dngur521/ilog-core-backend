@@ -2,14 +2,9 @@ package com.webkit640.ilog_core_backend.infrastructure.security;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webkit640.ilog_core_backend.api.response.ErrorResponse;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -26,6 +21,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webkit640.ilog_core_backend.api.response.ErrorResponse;
+import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -108,7 +107,7 @@ public class SecurityConfig {
                 .headers(h -> h
                 .xssProtection(Customizer.withDefaults())
                 .contentSecurityPolicy(csp -> csp
-                .policyDirectives("default-src 'self'; script-src 'self'; object-src 'none; frame-ancestors 'none'")
+                .policyDirectives("default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'none'")
                 )
                 // .frameOptions(frame -> frame.sameOrigin()) H2 콘솔 등 필요시
                 )
@@ -125,8 +124,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/summaries/simple").permitAll()
                 .requestMatchers(HttpMethod.POST, "/rag/index").permitAll()
                 .requestMatchers(HttpMethod.POST, "/rag/ask").permitAll()
+                // 관리자 전용 API
+                .requestMatchers("/admin/**").hasRole("ADMIN")        
+                // 로그인 사용자만 접근 가능
                 .requestMatchers(HttpMethod.GET, "/members").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/members").authenticated()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 .requestMatchers("/members/**").authenticated()
                 .requestMatchers("/meetings/**").authenticated()
                 .requestMatchers("/minutes/**").authenticated()

@@ -2,7 +2,13 @@ package com.webkit640.ilog_core_backend.application.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.webkit640.ilog_core_backend.domain.event.FolderDeletedEvent;
+import com.webkit640.ilog_core_backend.domain.model.*;
+import com.webkit640.ilog_core_backend.domain.repository.*;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -11,17 +17,6 @@ import com.webkit640.ilog_core_backend.api.request.FolderRequest;
 import com.webkit640.ilog_core_backend.api.request.ParticipantRequest;
 import com.webkit640.ilog_core_backend.api.response.FolderResponse;
 import com.webkit640.ilog_core_backend.application.mapper.FolderMapper;
-import com.webkit640.ilog_core_backend.domain.model.ActionType;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
-import com.webkit640.ilog_core_backend.domain.model.Folder;
-import com.webkit640.ilog_core_backend.domain.model.FolderLog;
-import com.webkit640.ilog_core_backend.domain.model.FolderParticipant;
-import com.webkit640.ilog_core_backend.domain.model.Member;
-import com.webkit640.ilog_core_backend.domain.model.Minutes;
-import com.webkit640.ilog_core_backend.domain.repository.FolderDAO;
-import com.webkit640.ilog_core_backend.domain.repository.FolderLogDAO;
-import com.webkit640.ilog_core_backend.domain.repository.FolderParticipantDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MinutesDAO;
 import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
 
 import lombok.RequiredArgsConstructor;
@@ -40,7 +35,8 @@ public class FolderService {
     private final FolderParticipantDAO folderParticipantDAO;
     private final FolderMapper folderMapper;
     private final FolderLogDAO folderLogDAO;
-
+    private final ParticipantLogDAO participantLogDAO;
+    private final ApplicationEventPublisher eventPublisher;
     //폴더 생성
     @Transactional
     public Folder createFolder(Long folderId, FolderRequest.Create request, Long ownerId, MultipartFile folderImage) {
@@ -51,16 +47,8 @@ public class FolderService {
         identityVerification(folder, ownerId);
         //-------------------폴더 생성-------------------
         Folder newFolder = new Folder();
-
         //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
-        List<FolderParticipant> clonedParticipants = folder.getFolderParticipants().stream()
-                        .map(fp -> {
-                            FolderParticipant copy = new FolderParticipant();
-                            copy.setFolder(newFolder);
-                            copy.setParticipant(fp.getParticipant());
-                            copy.setApproachedAt(LocalDateTime.now());
-                            return copy;
-                        }).toList();
+        List<FolderParticipant> clonedParticipants = cloneFolderParticipants(newFolder, folder);
 
         newFolder.setParentFolder(folder);
         //-------------------동기화 추가-------------------
@@ -80,31 +68,42 @@ public class FolderService {
         folderDAO.save(newFolder);
 
         //------------------------ 로그 -------------------------
+        participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),owner.getEmail(), ParticipantType.MINUTES, ActionType.CREATE,"참여자 추가");
         folderLogging(owner.getId(),owner.getEmail(),folder.getCreatedAt(),folder.getId(), ActionType.CREATE,"정상 생성");
 
         return newFolder;
     }
-    
     //폴더 조회
-    public FolderResponse.Find getFolderDetail(Long folderId, Long userId){
+    public FolderResponse.Find getRootFolderDetail(Long userId, FolderRequest.Order request){
+        Member owner = memberService.getMember(userId);
+        Folder folder = getFolder(owner.getRootFolderId());
+
+        //-------------------폴더 조회-------------------
+        FolderResponse.Find find = getChild(request.getOrder(),folder);
+        //참여일시
+        approachedTime(folder, owner);
+
+        Folder refreshed = folderDAO.findByIdWithParticipantsAndChildren(folder.getId())
+                .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
+
+        return folderMapper.toFind(refreshed, find.getChildFolders(), find.getMinutesList(), owner);
+    }
+
+    //폴더 조회
+    public FolderResponse.Find getFolderDetail(Long folderId, Long userId, FolderRequest.Order request){
         Folder folder = getFolder(folderId);
         Member participant = memberService.getMember(userId);
         //-------------------참여자 인증-------------------
         participantVerification(folder, userId);
         //-------------------폴더 조회-------------------
-        List<FolderResponse.FolderSummary> childFolders = folderDAO.findByParentFolder(folder);
-        List<FolderResponse.MinutesSummary> minutesList = minutesDAO.findByFolderAndParticipants(folder);
-
+        FolderResponse.Find find = getChild(request.getOrder(),folder);
         //참여일시
-        FolderParticipant folderParticipant = folderParticipantDAO.findByFolderAndParticipant(folder,participant)
-                .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
-        folderParticipant.setApproachedAt(LocalDateTime.now());
-        folderParticipantDAO.save(folderParticipant);
+        approachedTime(folder, participant);
 
         Folder refreshed = folderDAO.findByIdWithParticipantsAndChildren(folderId)
                 .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
 
-        return folderMapper.toFind(refreshed, childFolders, minutesList, participant);
+        return folderMapper.toFind(refreshed, find.getChildFolders(), find.getMinutesList(), participant);
     }
 
     //폴더 수정
@@ -133,9 +132,7 @@ public class FolderService {
             folderDAO.save(folder);
 
             //참여일시
-            FolderParticipant folderParticipant = folderParticipantDAO.findByFolderAndParticipant(folder,owner)
-                    .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
-            folderParticipant.setApproachedAt(LocalDateTime.now());
+            approachedTime(folder, owner);
 
             //-------------------로그 남기기------------------
             folderLogging(owner.getId(), owner.getEmail(),folder.getUpdatedAt(),folder.getId(),ActionType.UPDATE,"정상 수정");
@@ -157,15 +154,25 @@ public class FolderService {
         }
         //-------------------재귀적으로 삭제-------------------
         deleteFolderRecursively(folder);
-        //------------------- 로그 -------------------
-        folderLogging(owner.getId(), owner.getUsername(),LocalDateTime.now(),folder.getId(),ActionType.DELETE,"정상 삭제");
     }
 
     //원하는 파일 조회 <- 회의록 조회지만 폴더단에 넣어놨음, 이유는 폴더에서 작동을 하니까
     public List<FolderResponse.MinutesSummary> getSearchMinutes(FolderRequest.Search request, CustomUserDetails user) {
         return minutesDAO.findByTitleAndParticipant(request.getMinutesName(),user.getId());
     }
-    
+
+    //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
+    private List<FolderParticipant> cloneFolderParticipants(Folder newFolder, Folder folder){
+        return folder.getFolderParticipants().stream()
+                .map(fp -> {
+                    FolderParticipant copy = new FolderParticipant();
+                    copy.setFolder(newFolder);
+                    copy.setParticipant(fp.getParticipant());
+                    copy.setApproachedAt(LocalDateTime.now());
+                    return copy;
+                }).toList();
+    }
+
     //폴더가 있는지 확인
     private Folder getFolder(Long folderId){
         return folderDAO.findByIdWithParticipantsAndChildren(folderId)
@@ -196,6 +203,13 @@ public class FolderService {
             deleteFolderRecursively(child);
         }
 
+        Folder fullyLoadedFolder = folderDAO.findByIdWithOwnerAndParticipants(folder.getId())
+                        .orElseThrow(()->new CustomException(ErrorCode.FOLDER_NOT_FOUND));
+
+        eventPublisher.publishEvent(new FolderDeletedEvent(this, fullyLoadedFolder));
+
+        //------------------- 로그 -------------------
+        folderLogging(folder.getOwner().getId(), folder.getOwner().getEmail(),LocalDateTime.now(),folder.getId(),ActionType.DELETE,"정상 삭제");
         folderDAO.delete(folder);
     }
 
@@ -261,6 +275,69 @@ public class FolderService {
         }
     }
 
+    //참여 일시 기록
+    private void approachedTime(Folder folder, Member owner){
+        FolderParticipant folderParticipant = folderParticipantDAO.findByFolderAndParticipant(folder,owner)
+                .orElseThrow(()-> new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND));
+        folderParticipant.setApproachedAt(LocalDateTime.now());
+        folderParticipantDAO.save(folderParticipant);
+    }
+
+    private FolderResponse.Find getChild(
+            OrderType orderType, Folder folder){
+        //-------------------폴더 조회-------------------
+        List<FolderResponse.FolderSummary> childFolders;
+        List<FolderResponse.MinutesSummary> minutesList = switch (orderType) {
+            //생성일 오래된순
+            case OrderType.CREATED_AT_ASC -> {
+                childFolders = folderDAO.findByParentFolderOrderByCreatedAtAsc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtAsc(folder);
+            }
+            //생성일 최신순
+            case OrderType.CREATED_AT_DESC -> {
+                childFolders = folderDAO.findByParentFolderOrderByCreatedAtDesc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtDesc(folder);
+            }
+            //변경일 오래된순
+            case OrderType.UPDATED_AT_ASC -> {
+                childFolders = folderDAO.findByParentFolderOrderByUpdatedAtAsc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtAsc(folder);
+            }
+            //변경일 최신순
+            case OrderType.UPDATED_AT_DESC -> {
+                childFolders = folderDAO.findByParentFolderOrderByUpdatedAtDesc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtDesc(folder);
+            }
+            //이름 오름차순
+            case OrderType.TITLE_ASC -> {
+                childFolders = folderDAO.findByParentFolderOrderByNameAsc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByNameAsc(folder);
+            }
+            //이름 내림차순
+            case OrderType.TITLE_DESC -> {
+                childFolders = folderDAO.findByParentFolderOrderByNameDesc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByNameDesc(folder);
+            }
+            //접근일 오래된순
+            case OrderType.APPROACHED_AT_ASC -> {
+                childFolders = folderDAO.findByParentFolderOrderByApproachedAtAsc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtAsc(folder);
+            }
+            //접근일 최신순
+            case OrderType.APPROACHED_AT_DESC -> {
+                childFolders = folderDAO.findByParentFolderOrderByApproachedAtDesc(folder);
+                yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtDesc(folder);
+            }
+        };
+        return new FolderResponse.Find(
+                null,
+                null,
+                childFolders,
+                minutesList,
+                null
+        );
+    }
+
     private void folderLogging(Long userId, String email, LocalDateTime createdAt, Long folderId, ActionType status, String description){
         FolderLog folderLog = new FolderLog();
         folderLog.setUserId(userId);
@@ -271,5 +348,19 @@ public class FolderService {
         folderLog.setDescription(description);
 
         folderLogDAO.save(folderLog);
+    }
+
+    //참여자 로그 남기기
+    public void participantLogging(Long userId, String email, LocalDateTime createdAt, String folderParticipantEmail, ParticipantType participantType, ActionType status, String description){
+        ParticipantLog minutesParticipantLog = new ParticipantLog();
+        minutesParticipantLog.setUserId(userId);
+        minutesParticipantLog.setEmail(email);
+        minutesParticipantLog.setCreatedAt(createdAt);
+        minutesParticipantLog.setParticipantEmail(folderParticipantEmail);
+        minutesParticipantLog.setParticipantType(participantType);
+        minutesParticipantLog.setStatus(status);
+        minutesParticipantLog.setDescription(description);
+
+        participantLogDAO.save(minutesParticipantLog);
     }
 }

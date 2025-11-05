@@ -12,14 +12,82 @@ import java.util.Optional;
 public interface FolderDAO extends JpaRepository<Folder, Long> {
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-                f.id, f.folderName, fp.approachedAt
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
             )
             FROM Folder f 
             JOIN f.folderParticipants fp 
             WHERE f.parentFolder = :folder 
-            ORDER BY f.id DESC""")
-    List<FolderResponse.FolderSummary> findByParentFolder(@Param("folder")Folder folder);
+            ORDER BY f.createdAt ASC""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByCreatedAtAsc(@Param("folder")Folder folder);
 
+    @Query(value = """
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
+            )
+            FROM Folder f 
+            JOIN f.folderParticipants fp 
+            WHERE f.parentFolder = :folder 
+            ORDER BY f.createdAt DESC""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByCreatedAtDesc(@Param("folder")Folder folder);
+
+    @Query(value = """
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
+            )
+            FROM Folder f 
+            JOIN f.folderParticipants fp 
+            WHERE f.parentFolder = :folder 
+            ORDER BY f.updatedAt ASC""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByUpdatedAtAsc(@Param("folder")Folder folder);
+
+    @Query(value = """
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
+            )
+            FROM Folder f 
+            JOIN f.folderParticipants fp 
+            WHERE f.parentFolder = :folder 
+            ORDER BY f.updatedAt DESC""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByUpdatedAtDesc(@Param("folder")Folder folder);
+    @Query(value = """
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
+            )
+            FROM Folder f 
+            JOIN f.folderParticipants fp 
+            WHERE f.parentFolder = :folder 
+            ORDER BY f.folderName ASC""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByNameAsc(@Param("folder")Folder folder);
+
+    @Query(value = """
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
+            )
+            FROM Folder f 
+            JOIN f.folderParticipants fp 
+            WHERE f.parentFolder = :folder 
+            ORDER BY f.folderName DESC""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByNameDesc(@Param("folder")Folder folder);
+
+    @Query(value = """
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
+            )
+            FROM Folder f 
+            JOIN f.folderParticipants fp 
+            WHERE f.parentFolder = :folder 
+            ORDER BY fp.approachedAt Asc""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByApproachedAtAsc(@Param("folder")Folder folder);
+
+    @Query(value = """
+            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
+                f.id, f.folderName, f.createdAt, fp.approachedAt, f.folderImage
+            )
+            FROM Folder f 
+            JOIN f.folderParticipants fp 
+            WHERE f.parentFolder = :folder 
+            ORDER BY fp.approachedAt DESC""")
+    List<FolderResponse.FolderSummary> findByParentFolderOrderByApproachedAtDesc(@Param("folder")Folder folder);
     //Lazy 로딩 방지를 위해 participants를 미리 함께 조회
     @Query("""
             SELECT DISTINCT f 
