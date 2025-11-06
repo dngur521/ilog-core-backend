@@ -1,5 +1,10 @@
 package com.webkit640.ilog_core_backend.infrastructure.security;
 
+import com.webkit640.ilog_core_backend.domain.model.ActionType;
+import com.webkit640.ilog_core_backend.domain.model.LoginLog;
+import com.webkit640.ilog_core_backend.domain.model.Member;
+import com.webkit640.ilog_core_backend.domain.repository.LoginLogDAO;
+import com.webkit640.ilog_core_backend.domain.repository.MemberDAO;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -7,13 +12,18 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.connection.Message;
+import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -58,10 +68,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return;
                 }
 
-                String username = jwtTokenProvider.getUsername(token);
-
+                Long userId = jwtTokenProvider.getUserId(token);
                 //DB 사용자 정보로 항상 최신 권한 셋업
-                UserDetails userDetails = customMemberDetailsService.loadUserByUsername(username);
+                UserDetails userDetails = customMemberDetailsService.loadUserById(userId);
 
                 // 인증 객체 생성
                 UsernamePasswordAuthenticationToken authentication =
@@ -86,6 +95,48 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.error("Unexpected error in JwtAuthenticationFilter", e);
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
+        }
+    }
+
+    @Slf4j
+    @Component
+    public static class RedisKeyExpirationListener extends KeyExpirationEventMessageListener {
+        private final LoginLogDAO loginLogDAO;
+        private final MemberDAO memberDAO;
+
+        public RedisKeyExpirationListener(RedisMessageListenerContainer listenerContainer,
+                                          LoginLogDAO loginLogDAO,
+                                          MemberDAO memberDAO) {
+            super(listenerContainer);
+            this.loginLogDAO = loginLogDAO;
+            this.memberDAO = memberDAO;
+        }
+
+        @Override
+        public void onMessage(Message message, byte[] pattern){
+            String expiredKey = message.toString();
+            if(expiredKey.startsWith("REFRESH:")){
+                try{
+                    Long userId = Long.valueOf(expiredKey.split(":")[1]);
+
+                    String email = memberDAO.findById(userId)
+                            .map(Member::getEmail)
+                            .orElse("unknown");
+
+                    LoginLog logEntity = new LoginLog();
+                    logEntity.setUserId(userId);
+                    logEntity.setEmail(email);
+                    logEntity.setCreatedAt(LocalDateTime.now());
+                    logEntity.setStatus(ActionType.LOGOUT);
+                    logEntity.setDescription("자동 로그아웃");
+
+                    loginLogDAO.save(logEntity);
+
+                    log.info("User {} 자동 로그아웃 처리 (key expired: {})", userId, expiredKey);
+                }catch (Exception e){
+                    log.error("자동 로그아웃 처리 중 오류 - key: {}", expiredKey, e);
+                }
+            }
         }
     }
 }

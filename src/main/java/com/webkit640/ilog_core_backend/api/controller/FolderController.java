@@ -85,13 +85,25 @@ public class FolderController {
         return ResponseEntity.noContent().build();
     }
 
+    //폴더 이미지 삭제
+    @DeleteMapping("/{folderId}/image")
+    public ResponseEntity<Void> deleteFolderImage(
+            @PathVariable("folderId") Long folderId,
+            @AuthenticationPrincipal CustomUserDetails owner
+    ){
+        folderService.deleteFolderImage(folderId, owner);
+        return ResponseEntity.noContent().build();
+    }
+
+
     //검색어로 회의록 조회
     @GetMapping("/search")
     public ResponseEntity<List<FolderResponse.MinutesSummary>> searchFolder(
             @ModelAttribute FolderRequest.Search request,
             @AuthenticationPrincipal CustomUserDetails user
     ){
-        List<FolderResponse.MinutesSummary> response = folderService.getSearchMinutes(request, user);
+        Long userId = user.getId();
+        List<FolderResponse.MinutesSummary> response = folderService.getSearchMinutes(request, userId);
         return ResponseEntity.ok(folderMapper.toSearch(response));
     }
     //---------------조원 권한 관리-----------------------------
@@ -103,18 +115,20 @@ public class FolderController {
             @RequestBody ParticipantRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
-        List<FolderParticipant> folderParticipantList = folderService.createParticipant(folderId, request, owner);
+        Long ownerId = owner.getId();
+        List<FolderParticipant> folderParticipantList = folderService.createParticipant(folderId, request, ownerId);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }
 
     //조원 관리 조회
-    @GetMapping("{folderId}/party")
-    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> findParticipant(
+    @GetMapping("/{folderId}/party")
+    public ResponseEntity<ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant>> findParticipant(
             @PathVariable("folderId") Long folderId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
-        List<FolderParticipant> folderParticipantList = folderService.getParticipant(folderId, owner);
-        return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
+        Long ownerId = owner.getId();
+        ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant> folderParticipantList = folderService.getParticipant(folderId, ownerId);
+        return ResponseEntity.ok(folderParticipantList);
     }
 
     //조원 관리 삭제
@@ -124,7 +138,8 @@ public class FolderController {
             @RequestParam ParticipantRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
-        List<FolderParticipant> folderParticipantList = folderService.deleteParticipant(folderId, request, owner);
+        Long ownerId = owner.getId();
+        List<FolderParticipant> folderParticipantList = folderService.deleteParticipant(folderId, request, ownerId);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }
 }

@@ -62,7 +62,8 @@ public class MemoController {
             @RequestBody MemoRequest.Update request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
-        List<Memo> memo = memoService.updateMemo(minutesId, request, user);
+        Long userId = user.getId();
+        List<Memo> memo = memoService.updateMemo(minutesId, request, userId);
         return ResponseEntity.ok(mapper.toDetail(memo));
     }
 
@@ -73,7 +74,8 @@ public class MemoController {
             @ModelAttribute MemoRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails user
     ) {
-        memoService.deleteMemo(minutesId, request, user);
+        Long userId = user.getId();
+        memoService.deleteMemo(minutesId, request, userId);
         return ResponseEntity.noContent().build();
     }
 }

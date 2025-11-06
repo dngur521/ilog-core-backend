@@ -5,10 +5,13 @@ import java.util.List;
 
 import com.webkit640.ilog_core_backend.SummaryController;
 import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
+import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
 import com.webkit640.ilog_core_backend.application.mapper.MinutesMapper;
+import com.webkit640.ilog_core_backend.application.mapper.ParticipantMapper;
 import com.webkit640.ilog_core_backend.domain.event.MinutesDeletedEvent;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.*;
+import com.webkit640.ilog_core_backend.infrastructure.security.LinkTokenService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +33,8 @@ public class MinutesService {
     private final MemberService memberService;
     private final PermissionPropagationService permissionPropagationService;
     private final MinutesMapper minutesMapper;
+    private final LinkTokenService linkTokenService;
+    private final ParticipantMapper participantMapper;
     private final MemoDAO memoDAO;
     private final SummaryController summaryController;
     private final ApplicationEventPublisher eventPublisher;
@@ -151,25 +156,26 @@ public class MinutesService {
 
 
     @Transactional
-    public void deleteMinutes(Long minutesId, CustomUserDetails owner) {
-        Minutes minutes = getMinutes(minutesId,owner.getId());
+    public void deleteMinutes(Long minutesId, Long ownerId) {
+        Minutes minutes = getMinutes(minutesId,ownerId);
 
         //----회의록 주인과 삭제할 대상이 같아야만 실행--------
-        identityVerification(minutes.getFolder(), owner.getId());
+        identityVerification(minutes.getFolder(), ownerId);
         //--------------------로그 남기기--------------------------------
         eventPublisher.publishEvent(new MinutesDeletedEvent(this, minutes));
-        minutesLogging(owner.getId(),owner.getUsername(),LocalDateTime.now(),minutes.getId(),ActionType.DELETE,"정상 삭제");
+        String email = memberService.getMember(ownerId).getEmail();
+        minutesLogging(ownerId,email,LocalDateTime.now(),minutes.getId(),ActionType.DELETE,"정상 삭제");
         //----------------- 회의록 삭제 -----------------------------
         minutesDAO.delete(minutes);
     }
 
     //------------------------------------권한 관리-----------------------------------------
     // 참가자 추가
-    public List<MinutesParticipant> createParticipant(Long minutesId, ParticipantRequest.Create request, CustomUserDetails owner) {
-        Minutes minutes = getMinutes(minutesId, owner.getId());
+    public List<MinutesParticipant> createParticipant(Long minutesId, ParticipantRequest.Create request, Long ownerId) {
+        Minutes minutes = getMinutes(minutesId, ownerId);
         Member createMember = memberService.getMember(request.getCreateMemberId());
         //---------------본인 인증-----------------------
-        identityVerification(minutes.getFolder(), owner.getId());
+        identityVerification(minutes.getFolder(), ownerId);
         //-------------------request에 맴버가 들어왔는지 확인-------------------
         folderParticipantRequestIsNull(createMember);
         //-------------------이미 참여되어 있는지 검증-------------------
@@ -181,30 +187,35 @@ public class MinutesService {
     }
 
     //참가자 조회
-    public List<MinutesParticipant> getParticipant(Long minutesId, CustomUserDetails owner) {
-        Minutes minutes = getMinutes(minutesId, owner.getId());
+    public ParticipantResponse.DetailLink<ParticipantResponse.MinutesParticipant> getParticipant(
+            Long minutesId, Long ownerId)
+    {
+        Minutes minutes = getMinutes(minutesId, ownerId);
+        identityParticipant(minutes, ownerId);
+        var participant = minutesParticipantDAO.findByMinutes(minutes);
+        String link = linkTokenService.createLink("MINUTES", minutesId);
 
-        identityParticipant(minutes, owner.getId());
-        return minutesParticipantDAO.findByMinutes(minutes);
+        return participantMapper.toMinutesDetailLink(participant,link);
     }
     @Transactional
     // 참가자 퇴출
-    public List<MinutesParticipant> deleteParticipant(Long minutesId, ParticipantRequest.Delete request, CustomUserDetails owner) {
-        Minutes minutes = getMinutes(minutesId, owner.getId());
+    public List<MinutesParticipant> deleteParticipant(Long minutesId, ParticipantRequest.Delete request, Long ownerId) {
+        Minutes minutes = getMinutes(minutesId, ownerId);
         Member deleteMember = memberService.getMember(request.getDeleteMemberId());
 
         //---------------본인 인증-----------------------
-        identityVerification(minutes.getFolder(), owner.getId());
+        identityVerification(minutes.getFolder(), ownerId);
         //-------------삭제할 회원 확인-------------------
         folderParticipantRequestIsNull(deleteMember);
         //--------------회의록 주인 본인 삭제 X-----------------
-        if(minutes.getFolder().getOwner().getId().equals(owner.getId())){
+        if(minutes.getFolder().getOwner().getId().equals(ownerId)){
             throw new CustomException(ErrorCode.PERMISSION_SELF_DELETE_DENIED);
         }
         //----------------삭제-------------------------
         minutesParticipantDAO.deleteByMinutesAndParticipant(minutes, deleteMember);
         //----------------------로그--------------------------
-        permissionPropagationService.participantLogging(owner.getId(),owner.getUsername(),LocalDateTime.now(),deleteMember.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 삭제");
+        String email = memberService.getMember(ownerId).getEmail();
+        permissionPropagationService.participantLogging(ownerId,email,LocalDateTime.now(),deleteMember.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 삭제");
         //--------------수정된 회원 리스트 리턴-----------
         return minutesParticipantDAO.findByMinutes(minutes);
     }

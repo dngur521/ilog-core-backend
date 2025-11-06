@@ -161,7 +161,7 @@ public class MemberService {
             throw new CustomException(ErrorCode.PHONE_NUM_NOT_MATCH);
         }
         long resetTtlMs = 15 * 60 * 1000L;
-        return jwtTokenProvider.buildToken(member.getId(),member.getEmail(), List.of(), "RESET", resetTtlMs);
+        return jwtTokenProvider.buildToken(member.getId(), List.of(), "RESET", resetTtlMs);
     }
 
     //입력받은 비밀번호를 새 비밀번호로 입력
@@ -177,8 +177,8 @@ public class MemberService {
             throw new CustomException(ErrorCode.INVALID_TOKEN);
         }
 
-        String email = jwtTokenProvider.getUsername(token);
-        Member member = memberDAO.findByEmail(email)
+        Long userId = jwtTokenProvider.getUserId(token);
+        Member member = memberDAO.findById(userId)
                 .orElseThrow(()-> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         //------------------- 비밀번호 중복 체크 -------------------

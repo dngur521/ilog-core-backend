@@ -2,6 +2,9 @@ package com.webkit640.ilog_core_backend.infrastructure.security;
 
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webkit640.ilog_core_backend.api.response.ErrorResponse;
+import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,10 +24,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webkit640.ilog_core_backend.api.response.ErrorResponse;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -46,7 +45,7 @@ public class SecurityConfig {
     //비밀번호 암호화 방식 설정
     @Bean
     public PasswordEncoder passwordEncoder() {
-        //new BCryptPasswordEncoder(12); <- 강도 조절
+//        return new BCryptPasswordEncoder(12); //<- 강도 조절
         return new BCryptPasswordEncoder();
     }
 
@@ -124,12 +123,14 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/summaries/simple").permitAll()
                 .requestMatchers(HttpMethod.POST, "/rag/index").permitAll()
                 .requestMatchers(HttpMethod.POST, "/rag/ask").permitAll()
+                .requestMatchers(HttpMethod.GET, "/redirect/**").permitAll()
+                .requestMatchers("/link/**").permitAll()
                 // 관리자 전용 API
                 .requestMatchers("/admin/**").hasRole("ADMIN")        
                 // 로그인 사용자만 접근 가능
                 .requestMatchers(HttpMethod.GET, "/members").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/members").authenticated()
-                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").authenticated()
                 .requestMatchers("/members/**").authenticated()
                 .requestMatchers("/meetings/**").authenticated()
                 .requestMatchers("/minutes/**").authenticated()

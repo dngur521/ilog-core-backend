@@ -26,18 +26,39 @@ public class ParticipantMapper {
                 entity.getParticipant().getName()
         );
     }
-    public ParticipantResponse.Detail<ParticipantResponse.FolderParticipant> toFolderDetail(List<FolderParticipant> folderParticipantList) {
+    public ParticipantResponse.Detail<ParticipantResponse.FolderParticipant> toFolderDetail(
+            List<FolderParticipant> folderParticipantList
+    ){
         List<ParticipantResponse.FolderParticipant> participants = folderParticipantList.stream()
                 .map(this::toFolderParticipant)
                 .toList();
         return new ParticipantResponse.Detail<>(participants);
     }
+    public ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant> toFolderDetailLink(
+            List<FolderParticipant> folderParticipantList, String link
+    ){
+        List<ParticipantResponse.FolderParticipant> participants = folderParticipantList.stream()
+                .map(this::toFolderParticipant)
+                .toList();
+        return new ParticipantResponse.DetailLink<>(participants, link);
+    }
 
-    public ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant> toMinutesDetail(List<MinutesParticipant> minutesParticipantList) {
+    public ParticipantResponse.DetailLink<ParticipantResponse.MinutesParticipant> toMinutesDetailLink(
+            List<MinutesParticipant> minutesParticipantList, String link
+    ){
+        List<ParticipantResponse.MinutesParticipant> participants = minutesParticipantList.stream()
+                .map(this::toMinutesParticipant)
+                .toList();
+        return new ParticipantResponse.DetailLink<>(participants, link);
+    }
+
+
+    public ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant> toMinutesDetail(
+            List<MinutesParticipant> minutesParticipantList
+    ){
         List<ParticipantResponse.MinutesParticipant> participants = minutesParticipantList.stream()
                 .map(this::toMinutesParticipant)
                 .toList();
         return new ParticipantResponse.Detail<>(participants);
     }
-
 }

@@ -1,16 +1,10 @@
 package com.webkit640.ilog_core_backend.infrastructure.security;
 
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.time.LocalDateTime;
-import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
-import com.webkit640.ilog_core_backend.application.service.AuthService;
-import com.webkit640.ilog_core_backend.domain.model.ActionType;
-import com.webkit640.ilog_core_backend.domain.model.LoginLog;
 import com.webkit640.ilog_core_backend.domain.repository.LoginLogDAO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @RequiredArgsConstructor
 public class JwtTokenProvider {
+    private final LoginLogDAO loginLogDAO;
+    private final TokenStoreService tokenStoreService;
 
     // 비밀키
     @Value("${security.jwt.secret}")
@@ -53,25 +49,22 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private final LoginLogDAO loginLogDAO;
-
-    public String createAccessToken(Long userId, String username, List<String> roles) {
-        return buildToken(userId, username, roles, "ACCESS", accessExpirationMs);
+    public String createAccessToken(Long userId,List<String> roles) {
+        return buildToken(userId, roles, "ACCESS", accessExpirationMs);
     }
 
-    public String createRefreshToken(Long userId, String username) {
-        return buildToken(userId, username, List.of(), "REFRESH", refreshExpirationMs);
+    public String createRefreshToken(Long userId) {
+        return buildToken(userId, List.of(), "REFRESH", refreshExpirationMs);
     }
 
     //토큰 생성
-    public String buildToken(Long userId, String username, List<String> roles, String type, Long ttLms) {
+    public String buildToken(Long userId, List<String> roles, String type, Long ttLms) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + ttLms);
         String jti = UUID.randomUUID().toString();
-        String encodedJti = Base64.getEncoder().encodeToString(jti.getBytes(StandardCharsets.UTF_8));
+
         return Jwts.builder()
-                .setId(encodedJti)
-                .setSubject(username)
+                .setId(jti)
                 .setIssuer(issuer)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
@@ -123,11 +116,6 @@ public class JwtTokenProvider {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-    }
-
-    //토큰에서 username(subject) 추출
-    public String getUsername(String token) {
-        return parseClaims(token).getSubject();
     }
 
     //토큰에서 userId 추출

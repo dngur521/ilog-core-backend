@@ -28,20 +28,23 @@ public class MeetingService {
     @Transactional
     public void createMeeting(CustomUserDetails owner) {
         //-------------------------로그------------------------------
-        meetingLogging(owner.getId(), owner.getUsername(), LocalDateTime.now(), ActionType.CREATE, "정상 생성");
+        String email = getEmail(owner.getId());
+        meetingLogging(owner.getId(), email, LocalDateTime.now(), ActionType.CREATE, "정상 생성");
     }
 
     //화상회의 참여
     @Transactional
     public void joinMeeting(CustomUserDetails participant) {
         //--------------------------------로그 ---------------------------------------------
-        meetingLogging(participant.getId(), participant.getUsername(), LocalDateTime.now(), ActionType.JOIN, "정상 참여");
+        String email = getEmail(participant.getId());
+        meetingLogging(participant.getId(), email, LocalDateTime.now(), ActionType.JOIN, "정상 참여");
     }
 
     //화상회의 퇴장
     public void exitMeeting(CustomUserDetails participant) {
         //--------------------------------로그 ---------------------------------------------
-        meetingLogging(participant.getId(), participant.getUsername(), LocalDateTime.now(), ActionType.DELETE, "정상 퇴장");
+        String email = getEmail(participant.getId());
+        meetingLogging(participant.getId(), email, LocalDateTime.now(), ActionType.DELETE, "정상 퇴장");
     }
 
     //화상회의 종료
@@ -72,5 +75,9 @@ public class MeetingService {
         meetingLog.setDescription(description);
 
         meetingLogDAO.save(meetingLog);
+    }
+
+    private String getEmail(Long userId){
+        return memberService.getMember(userId).getEmail();
     }
 }

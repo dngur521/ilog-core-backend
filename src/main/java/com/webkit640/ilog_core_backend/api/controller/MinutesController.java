@@ -76,7 +76,8 @@ public class MinutesController {
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
-        minutesService.deleteMinutes(minutesId, owner);
+        Long ownerId = owner.getId();
+        minutesService.deleteMinutes(minutesId, ownerId);
         return ResponseEntity.noContent().build();
     }
 
@@ -89,17 +90,19 @@ public class MinutesController {
             @RequestBody ParticipantRequest.Create request,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
-        List<MinutesParticipant> participants = minutesService.createParticipant(minutesId, request, owner);
+        Long ownerId = owner.getId();
+        List<MinutesParticipant> participants = minutesService.createParticipant(minutesId, request, ownerId);
         return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
     }
     //조원 관리 조회
-    @GetMapping("{minutesId}/party")
-    public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant>> findParticipant(
+    @GetMapping("/{minutesId}/party")
+    public ResponseEntity<ParticipantResponse.DetailLink<ParticipantResponse.MinutesParticipant>> findParticipant(
             @PathVariable("minutesId") Long minutesId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
-        List<MinutesParticipant> participants = minutesService.getParticipant(minutesId, owner);
-        return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
+        Long ownerId = owner.getId();
+        ParticipantResponse.DetailLink<ParticipantResponse.MinutesParticipant> minutesList = minutesService.getParticipant(minutesId, ownerId);
+        return ResponseEntity.ok(minutesList);
     }
 
     //조원 관리 삭제
@@ -109,7 +112,8 @@ public class MinutesController {
             @RequestParam ParticipantRequest.Delete request,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
-        List<MinutesParticipant> participants = minutesService.deleteParticipant(minutesId, request, owner);
+        Long ownerId = owner.getId();
+        List<MinutesParticipant> participants = minutesService.deleteParticipant(minutesId, request, ownerId);
         return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
     }
 }

@@ -1,8 +1,9 @@
 package com.webkit640.ilog_core_backend.domain.model;
 
+import org.springframework.http.HttpStatus;
+
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
@@ -14,12 +15,12 @@ public enum ErrorCode {
     VIEW_DENIED(HttpStatus.FORBIDDEN,"조회 권한이 없습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"유효하지 않은 토큰입니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED,"토큰이 만료되었습니다."),
-    ALGORITHM_NOT_AVAILABLE(HttpStatus.UNAUTHORIZED,"해쉬가 적용되지 않았습니다."),
 
     //이미지 업로드 관련
     FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR,"파일을 업로드 중 오류가 발생했습니다."),
     FILE_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR,"파일 삭제 중 오류가 발생했습니다."),
     FILE_EMPTY(HttpStatus.INTERNAL_SERVER_ERROR,"파일이 업로드 되지 못했습니다."),
+    FILE_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND,"삭제할 이미지 경로가 없습니다."),
 
     //회원 관련
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND,"회원을 찾을 수 없습니다."),

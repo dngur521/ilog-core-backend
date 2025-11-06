@@ -10,6 +10,12 @@ import java.util.List;
 public class ParticipantResponse {
     @Data
     @AllArgsConstructor
+    public static class DetailLink<T>{
+        Collection<T> participants;
+        String link;
+    }
+    @Data
+    @AllArgsConstructor
     public static class Detail<T>{
         Collection<T> participants;
     }

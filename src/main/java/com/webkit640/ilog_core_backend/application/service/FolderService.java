@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
+import com.webkit640.ilog_core_backend.application.mapper.ParticipantMapper;
 import com.webkit640.ilog_core_backend.domain.event.FolderDeletedEvent;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.*;
+import com.webkit640.ilog_core_backend.infrastructure.security.LinkTokenService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,9 +37,11 @@ public class FolderService {
     private final MinutesDAO minutesDAO;
     private final FolderParticipantDAO folderParticipantDAO;
     private final FolderMapper folderMapper;
+    private final ParticipantMapper participantMapper;
     private final FolderLogDAO folderLogDAO;
     private final ParticipantLogDAO participantLogDAO;
     private final ApplicationEventPublisher eventPublisher;
+    private final LinkTokenService linkTokenService;
     //폴더 생성
     @Transactional
     public Folder createFolder(Long folderId, FolderRequest.Create request, Long ownerId, MultipartFile folderImage) {
@@ -156,9 +161,25 @@ public class FolderService {
         deleteFolderRecursively(folder);
     }
 
+    //폴더 삭제
+    @Transactional
+    public void deleteFolderImage(Long folderId, CustomUserDetails owner) {
+        Folder folder = getFolder(folderId);
+        //-------------------본인 인증-------------------
+        identityVerification(folder, owner.getId());
+
+        if(folder.getFolderImage() == null || folder.getFolderImage().isBlank()){
+            throw new CustomException(ErrorCode.FILE_IMAGE_NOT_FOUND);
+        }
+        log.warn(folder.getFolderImage());
+        fileService.delete(folder.getFolderImage());
+        folder.setFolderImage(null);
+    }
+
+
     //원하는 파일 조회 <- 회의록 조회지만 폴더단에 넣어놨음, 이유는 폴더에서 작동을 하니까
-    public List<FolderResponse.MinutesSummary> getSearchMinutes(FolderRequest.Search request, CustomUserDetails user) {
-        return minutesDAO.findByTitleAndParticipant(request.getMinutesName(),user.getId());
+    public List<FolderResponse.MinutesSummary> getSearchMinutes(FolderRequest.Search request, Long userId) {
+        return minutesDAO.findByTitleAndParticipant(request.getMinutesName(),userId);
     }
 
     //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
@@ -215,12 +236,12 @@ public class FolderService {
 
     //-----------------------------------------권한---------------------------------------
     @Transactional
-    public List<FolderParticipant> createParticipant(Long folderId, ParticipantRequest.Create request, CustomUserDetails owner) {
+    public List<FolderParticipant> createParticipant(Long folderId, ParticipantRequest.Create request, Long ownerId) {
         Folder folder = getFolder(folderId);
         Member createMember = memberService.getMember(request.getCreateMemberId());
 
         //---------------본인 인증-----------------------
-        identityVerification(folder, owner.getId());
+        identityVerification(folder, ownerId);
         //-------------------request에 맴버가 들어왔는지 확인-------------------
         folderParticipantRequestIsNull(createMember);
         //-------------------이미 참여되어 있는지 검증-------------------
@@ -231,23 +252,28 @@ public class FolderService {
         return folderParticipantDAO.findByFolder(folder);
     }
     //참여자 조회
-    public List<FolderParticipant> getParticipant(Long folderId, CustomUserDetails owner) {
+    public ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant> getParticipant(
+            Long folderId, Long ownerId
+    ){
         Folder folder = getFolder(folderId);
-        identityParticipant(folder, owner.getId());
-        return folderParticipantDAO.findByFolder(folder);
+        identityParticipant(folder, ownerId);
+        var participants = folderParticipantDAO.findByFolder(folder);
+
+        String link = linkTokenService.createLink("FOLDER",folderId);
+        return participantMapper.toFolderDetailLink(participants, link);
     }
     //참여자 삭제
     @Transactional
-    public List<FolderParticipant> deleteParticipant(Long folderId, ParticipantRequest.Delete request, CustomUserDetails owner) {
+    public List<FolderParticipant> deleteParticipant(Long folderId, ParticipantRequest.Delete request, Long ownerId) {
         Folder folder = getFolder(folderId);
         Member deleteMember = memberService.getMember(request.getDeleteMemberId());
 
         //---------------본인 인증-----------------------
-        identityVerification(folder, owner.getId());
+        identityVerification(folder, ownerId);
         //-------------삭제할 회원 확인-------------------
         folderParticipantRequestIsNull(deleteMember);
         //----------------삭제-------------------------
-        permissionPropagationService.removeToFoldersAndMinutes(folderId, request.getDeleteMemberId(), owner.getId());
+        permissionPropagationService.removeToFoldersAndMinutes(folderId, request.getDeleteMemberId(),ownerId);
         //--------------수정된 회원 리스트 리턴-----------
         return folderParticipantDAO.findByFolder(folder);
     }
@@ -283,6 +309,7 @@ public class FolderService {
         folderParticipantDAO.save(folderParticipant);
     }
 
+    //정렬 관리
     private FolderResponse.Find getChild(
             OrderType orderType, Folder folder){
         //-------------------폴더 조회-------------------

@@ -42,10 +42,11 @@ public class AuthService {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
 
+        //-------------------- role이 추가되기 전에 만든 계정때문에 있는 코드, 나중에 없애면 됨 ---------------------------
         RoleType roleType = member.getRole() != null ? member.getRole() : RoleType.USER;
-
-        String access = jwtTokenProvider.createAccessToken(member.getId(),member.getEmail(),List.of("ROLE_" + roleType.name()));
-        String refresh = jwtTokenProvider.createRefreshToken(member.getId(),member.getEmail());
+        //---------------------------------------------------------------------------------------------------------
+        String access = jwtTokenProvider.createAccessToken(member.getId(),List.of("ROLE_" + roleType.name()));
+        String refresh = jwtTokenProvider.createRefreshToken(member.getId());
 
         AuthResponse.Token token = new AuthResponse.Token(access,refresh);
 
@@ -73,9 +74,9 @@ public class AuthService {
         }else{
             tokenStoreService.deleteRefresh(user.getId());
         }
-
+        Member member = memberDAO.findById(user.getId()).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         //--------------------- 로그 --------------------------
-        loginLogging(user.getId(),user.getUsername(),ActionType.LOGOUT,"정상 로그아웃");
+        loginLogging(member.getId(),member.getEmail(),ActionType.LOGOUT,"정상 로그아웃");
     }
 
     public AuthResponse.Token refresh(String refresh) {
@@ -92,9 +93,8 @@ public class AuthService {
         Member member = memberDAO.findById(userId)
                 .orElseThrow(()-> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
-        String email = jwtTokenProvider.getUsername(refresh);
-        String newAccess = jwtTokenProvider.createAccessToken(userId,email,List.of("ROLE_" + member.getRole().name()));
-        String newRefresh = jwtTokenProvider.createRefreshToken(userId,email);
+        String newAccess = jwtTokenProvider.createAccessToken(userId,List.of("ROLE_" + member.getRole().name()));
+        String newRefresh = jwtTokenProvider.createRefreshToken(userId);
 
         Long ttlSec = (jwtTokenProvider.getExpiration(newRefresh).getTime() - System.currentTimeMillis()) / 1000;
         tokenStoreService.saveRefresh(userId,newRefresh,ttlSec);

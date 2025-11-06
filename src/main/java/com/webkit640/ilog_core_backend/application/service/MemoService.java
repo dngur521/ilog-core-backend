@@ -39,9 +39,9 @@ public class MemoService {
     }
 
     @Transactional
-    public List<Memo> updateMemo(Long minutesId, MemoRequest.Update request, CustomUserDetails user) {
+    public List<Memo> updateMemo(Long minutesId, MemoRequest.Update request, Long userId) {
         //------------- 인증된 메모 반환 ------------
-        Memo memo = verifyMemo(minutesId, request.getUpdateId(), user);
+        Memo memo = verifyMemo(minutesId, request.getUpdateId(), userId);
         //---------------------메모 수정------------------------------
         if(request.getContent() != null && !request.getContent().isBlank()){
             memo.setContent(request.getContent());
@@ -56,18 +56,20 @@ public class MemoService {
         memoDAO.save(memo);
 
         //-------------------------로그-----------------------------
-        memoLogging(user.getId(), user.getUsername(),memo.getUpdatedAt(),memo.getMinutes().getId(),ActionType.UPDATE,memo.getMemoType(),"정상 수정");
+        String email = memberService.getMember(userId).getEmail();
+        memoLogging(userId, email,memo.getUpdatedAt(),memo.getMinutes().getId(),ActionType.UPDATE,memo.getMemoType(),"정상 수정");
         //----------------------메모 리스트 리턴-----------------------
         return memoDAO.findAllByMinutes(memo.getMinutes());
     }
     @Transactional
-    public void deleteMemo(Long minutesId, MemoRequest.Delete request, CustomUserDetails user) {
+    public void deleteMemo(Long minutesId, MemoRequest.Delete request, Long userId) {
         //------------- 인증된 메모 반환 ------------
-        Memo memo = verifyMemo(minutesId, request.getDeleteId(), user);
+        Memo memo = verifyMemo(minutesId, request.getDeleteId(), userId);
         //----------------------메모 삭제-------------------------------
         memoDAO.delete(memo);
         //-----------------------로그----------------------------------
-        memoLogging(user.getId(),user.getUsername(),LocalDateTime.now(),minutesId,ActionType.DELETE,memo.getMemoType(),"정상 삭제");
+        String email = memberService.getMember(userId).getEmail();
+        memoLogging(userId,email, LocalDateTime.now(),minutesId,ActionType.DELETE,memo.getMemoType(),"정상 삭제");
     }
     //----------- 메모 생성 ------------------
     private Memo creatingMemo(Member member, MemoRequest.Create request, Minutes minutes){
@@ -84,11 +86,11 @@ public class MemoService {
     }
 
     // ---------------- 메모 접근 가능한지 검증 ------------------------
-    private Memo verifyMemo(Long minutesId, Long id, CustomUserDetails user){
+    private Memo verifyMemo(Long minutesId, Long id, Long userId){
         //------------- 메모 찾기 ------------
         Memo memo = memoDAO.findById(id).orElseThrow(()->new CustomException(ErrorCode.MEMO_NOT_FOUND));
         //------------- 본인의 메모인지 확인 ----------------------
-        identityVerification(memo, user.getId());
+        identityVerification(memo, userId);
         //----------------- 이 메모가 회의록의 메모인지 확인--------------
         if(!memo.getMinutes().getId().equals(minutesId)){
             throw new CustomException(ErrorCode.MINUTES_NOT_MATCH);
