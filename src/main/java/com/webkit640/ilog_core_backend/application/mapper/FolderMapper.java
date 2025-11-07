@@ -22,9 +22,10 @@ public class FolderMapper {
         );
     }
 
-    public FolderResponse.Find toFind(Folder folder, List<FolderResponse.FolderSummary> childFolders, List<FolderResponse.MinutesSummary> minutesList, Member participant) {
+    public FolderResponse.Find toFind(Folder folder, List<FolderResponse.FolderSummary> childFolders, List<FolderResponse.MinutesSummary> minutesList) {
         List<FolderResponse.FolderSummary> folderSummaries = childFolders.stream()
-                .map(f-> new FolderResponse.FolderSummary(
+                .map(f->
+                        new FolderResponse.FolderSummary(
                         f.getId(),
                         f.getName(),
                         f.getApproachedAt(),

@@ -4,6 +4,7 @@ import com.webkit640.ilog_core_backend.domain.model.Memo;
 import com.webkit640.ilog_core_backend.domain.model.MemoType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.cglib.core.Local;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,6 +24,8 @@ public class MinutesResponse {
         private Long id;
         private String title;
         private String content;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
         private List<Memos> memos;
     }
 

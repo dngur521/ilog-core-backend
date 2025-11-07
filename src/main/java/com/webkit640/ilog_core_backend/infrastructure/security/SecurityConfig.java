@@ -13,6 +13,7 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -54,6 +55,7 @@ public class SecurityConfig {
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }
+
 
     //cosr설정
     @Bean
@@ -124,13 +126,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/rag/index").permitAll()
                 .requestMatchers(HttpMethod.POST, "/rag/ask").permitAll()
                 .requestMatchers(HttpMethod.GET, "/redirect/**").permitAll()
-                .requestMatchers("/link/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                 // 관리자 전용 API
                 .requestMatchers("/admin/**").hasRole("ADMIN")        
                 // 로그인 사용자만 접근 가능
                 .requestMatchers(HttpMethod.GET, "/members").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/members").authenticated()
-                .requestMatchers(HttpMethod.GET, "/uploads/**").authenticated()
                 .requestMatchers("/members/**").authenticated()
                 .requestMatchers("/meetings/**").authenticated()
                 .requestMatchers("/minutes/**").authenticated()

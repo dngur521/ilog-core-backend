@@ -46,3 +46,6 @@ security:
         refresh-expiration-ms: 604800000 # 7일
         issuer: 'team-ilo9'
         clock-skew-seconds: 30
+app:
+    frontend:
+        url: https://webkit-ilo9-api.duckdns.org

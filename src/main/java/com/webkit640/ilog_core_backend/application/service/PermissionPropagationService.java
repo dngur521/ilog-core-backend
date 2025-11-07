@@ -56,17 +56,23 @@ public class PermissionPropagationService {
                 .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
         Member member = memberService.getMember(memberId);
 
-        //------------------현재 폴더에서 권한 삭제---------------------
-        removeFolderParticipantIfPresent(folder, member,ownerId);
-
-        //--------------------하위 폴더에서 권한 삭제-------------------
-        List<Folder> descendants = collectDescendants(folder);
-        for(Folder f : descendants){
-            removeFolderParticipantIfPresent(f, member, ownerId);
+        // 현재 폴더의 회의록에서 참가자 삭제
+        for(Minutes m : minutesDAO.findByFolder(folder)){
+            removeMinutesParticipantIfPresent(m,member, ownerId);
         }
-        
-        //현재 폴더 + 하위 폴더의 모든 회의록에서 회의록 참가자 제거
-        removeMinutesParticipantsInFolderTree(folder, descendants, member, ownerId);
+        // 하위 폴더 회의록에서 삭제 + 폴더에서 삭제
+        List<Folder> descendants = collectDescendants(folder);
+        for (Folder f : descendants){
+            // 하위 폴더의 회의록 참가자 삭제
+            for (Minutes m : minutesDAO.findByFolder(f)){
+                removeMinutesParticipantIfPresent(m,member, ownerId);
+            }
+
+            // 하위 폴더 참가자 삭제
+            removeFolderParticipantIfPresent(f, member,ownerId);
+        }
+        //현재 폴더 삭제
+        removeFolderParticipantIfPresent(folder, member, ownerId);
     }
 
     //------------------------유틸--------------------------------
@@ -105,20 +111,6 @@ public class PermissionPropagationService {
             Member owner = folder.getOwner();
             participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.FOLDER,ActionType.CREATE,"참여자 추가");
 
-        }
-    }
-
-    // 현재 폴더 + 하위 폴더의 모든 회의록에서 회의록 참가자 제거
-    private void removeMinutesParticipantsInFolderTree(Folder root, List<Folder> descendants, Member member, Long ownerId){
-        //현재 폴더 minutes
-        for(Minutes m : minutesDAO.findByFolder(root)){
-            removeMinutesParticipantIfPresent(m,member, ownerId);
-        }
-        //하위 폴더들 minutes
-        for(Folder f : descendants){
-            for (Minutes m : minutesDAO.findByFolder(f)){
-                removeMinutesParticipantIfPresent(m,member, ownerId);
-            }
         }
     }
 

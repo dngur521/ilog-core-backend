@@ -40,8 +40,7 @@ public class FolderController {
         Folder folder = folderService.createFolder(folderId, request,ownerId, folderImage);
         return ResponseEntity.ok(folderMapper.toCreate(folder));
     }
-    
-    //루프 프로젝트 조회
+    //루트 프로젝트 조회
     @GetMapping
     public ResponseEntity<FolderResponse.Find> findRootFolder(
             @ModelAttribute FolderRequest.Order request,
@@ -51,8 +50,8 @@ public class FolderController {
         FolderResponse.Find response = folderService.getRootFolderDetail(userId, request);
         return ResponseEntity.ok(response);
     }
-    
-    //폴더 조회 디렉토리 방식
+
+    //일반 폴더 조회
     @GetMapping("/{folderId}")
     public ResponseEntity<FolderResponse.Find> findFolder(
             @PathVariable("folderId") Long folderId,
@@ -63,6 +62,7 @@ public class FolderController {
         FolderResponse.Find response = folderService.getFolderDetail(folderId,userId, request);
         return ResponseEntity.ok(response);
     }
+    
     //폴더 수정
     @PatchMapping(value = "/{folderId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FolderResponse.Update> updateFolder(

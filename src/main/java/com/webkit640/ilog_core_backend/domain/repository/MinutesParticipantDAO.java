@@ -24,4 +24,6 @@ public interface MinutesParticipantDAO extends JpaRepository<MinutesParticipant,
     @Query("delete from MinutesParticipant mp where mp.minutes = :minutes and mp.participant = :participant")
     void deleteByMinutesAndParticipant(@Param("minutes") Minutes minutes,
             @Param("participant") Member participant);
+
+    void deleteAllByParticipant(Member member);
 }

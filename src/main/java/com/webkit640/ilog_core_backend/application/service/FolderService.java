@@ -2,8 +2,6 @@ package com.webkit640.ilog_core_backend.application.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
 import com.webkit640.ilog_core_backend.application.mapper.ParticipantMapper;
@@ -52,17 +50,18 @@ public class FolderService {
         identityVerification(folder, ownerId);
         //-------------------폴더 생성-------------------
         Folder newFolder = new Folder();
-        //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
-        List<FolderParticipant> clonedParticipants = cloneFolderParticipants(newFolder, folder);
 
         newFolder.setParentFolder(folder);
         //-------------------동기화 추가-------------------
         folder.getChildFolders().add(newFolder);
         newFolder.setOwner(owner);
-        newFolder.setFolderParticipants(clonedParticipants);
         newFolder.setFolderName(request.getFolderName());
-        newFolder.setCreatedAt(LocalDateTime.now());
+        LocalDateTime createdAt = LocalDateTime.now();
+        newFolder.setCreatedAt(createdAt);
         newFolder.setUpdatedAt(null);
+        //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
+        List<FolderParticipant> clonedParticipants = cloneFolderParticipants(newFolder, folder, createdAt);
+        newFolder.setFolderParticipants(clonedParticipants);
 
         //폴더 사진 생성
         if(folderImage != null && !folderImage.isEmpty()) {
@@ -73,25 +72,25 @@ public class FolderService {
         folderDAO.save(newFolder);
 
         //------------------------ 로그 -------------------------
-        participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),owner.getEmail(), ParticipantType.MINUTES, ActionType.CREATE,"참여자 추가");
-        folderLogging(owner.getId(),owner.getEmail(),folder.getCreatedAt(),folder.getId(), ActionType.CREATE,"정상 생성");
+        folderLogging(owner.getId(),owner.getEmail(),createdAt,newFolder.getId(), ActionType.CREATE,"정상 생성");
 
         return newFolder;
     }
-    //폴더 조회
+
+    //루트 폴더 조회
     public FolderResponse.Find getRootFolderDetail(Long userId, FolderRequest.Order request){
-        Member owner = memberService.getMember(userId);
-        Folder folder = getFolder(owner.getRootFolderId());
+        Member user = memberService.getMember(userId);
+        Folder folder = getFolder(user.getRootFolderId());
 
         //-------------------폴더 조회-------------------
-        FolderResponse.Find find = getChild(request.getOrder(),folder);
+        FolderResponse.Find find = getChild(request.getOrder(),folder, userId, true);
         //참여일시
-        approachedTime(folder, owner);
+        approachedTime(folder, user);
 
         Folder refreshed = folderDAO.findByIdWithParticipantsAndChildren(folder.getId())
                 .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
 
-        return folderMapper.toFind(refreshed, find.getChildFolders(), find.getMinutesList(), owner);
+        return folderMapper.toFind(refreshed, find.getChildFolders(), find.getMinutesList());
     }
 
     //폴더 조회
@@ -101,14 +100,14 @@ public class FolderService {
         //-------------------참여자 인증-------------------
         participantVerification(folder, userId);
         //-------------------폴더 조회-------------------
-        FolderResponse.Find find = getChild(request.getOrder(),folder);
+        FolderResponse.Find find = getChild(request.getOrder(),folder,userId, false);
         //참여일시
         approachedTime(folder, participant);
 
         Folder refreshed = folderDAO.findByIdWithParticipantsAndChildren(folderId)
                 .orElseThrow(()-> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
 
-        return folderMapper.toFind(refreshed, find.getChildFolders(), find.getMinutesList(), participant);
+        return folderMapper.toFind(refreshed, find.getChildFolders(), find.getMinutesList());
     }
 
     //폴더 수정
@@ -161,7 +160,7 @@ public class FolderService {
         deleteFolderRecursively(folder);
     }
 
-    //폴더 삭제
+    //폴더 이미지 삭제
     @Transactional
     public void deleteFolderImage(Long folderId, CustomUserDetails owner) {
         Folder folder = getFolder(folderId);
@@ -183,13 +182,13 @@ public class FolderService {
     }
 
     //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
-    private List<FolderParticipant> cloneFolderParticipants(Folder newFolder, Folder folder){
+    private List<FolderParticipant> cloneFolderParticipants(Folder newFolder, Folder folder, LocalDateTime createdAt){
         return folder.getFolderParticipants().stream()
                 .map(fp -> {
                     FolderParticipant copy = new FolderParticipant();
                     copy.setFolder(newFolder);
                     copy.setParticipant(fp.getParticipant());
-                    copy.setApproachedAt(LocalDateTime.now());
+                    copy.setApproachedAt(createdAt);
                     return copy;
                 }).toList();
     }
@@ -251,6 +250,25 @@ public class FolderService {
         //--------------수정된 회원 리스트 리턴-------------
         return folderParticipantDAO.findByFolder(folder);
     }
+
+    @Transactional
+    public void joinByInvite(Long folderId, Long userId) {
+        Folder folder = folderDAO.findById(folderId)
+                .orElseThrow(() -> new CustomException(ErrorCode.FOLDER_NOT_FOUND));
+        Member member = memberService.getMember(userId);
+
+        var existing = folderParticipantDAO.findByFolderAndParticipant(folder,member);
+        if (existing.isPresent()) return;
+
+        permissionPropagationService.grantToFolders(folderId, userId);
+
+        FolderParticipant fp = new FolderParticipant();
+        fp.setFolder(folder);
+        fp.setParticipant(member);
+        fp.setApproachedAt(LocalDateTime.now());
+        folderParticipantDAO.save(fp);
+    }
+
     //참여자 조회
     public ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant> getParticipant(
             Long folderId, Long ownerId
@@ -311,58 +329,111 @@ public class FolderService {
 
     //정렬 관리
     private FolderResponse.Find getChild(
-            OrderType orderType, Folder folder){
+            OrderType orderType, Folder folder, Long userId, boolean isRoot){
+
         //-------------------폴더 조회-------------------
         List<FolderResponse.FolderSummary> childFolders;
-        List<FolderResponse.MinutesSummary> minutesList = switch (orderType) {
-            //생성일 오래된순
-            case OrderType.CREATED_AT_ASC -> {
-                childFolders = folderDAO.findByParentFolderOrderByCreatedAtAsc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtAsc(folder);
-            }
-            //생성일 최신순
-            case OrderType.CREATED_AT_DESC -> {
-                childFolders = folderDAO.findByParentFolderOrderByCreatedAtDesc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtDesc(folder);
-            }
-            //변경일 오래된순
-            case OrderType.UPDATED_AT_ASC -> {
-                childFolders = folderDAO.findByParentFolderOrderByUpdatedAtAsc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtAsc(folder);
-            }
-            //변경일 최신순
-            case OrderType.UPDATED_AT_DESC -> {
-                childFolders = folderDAO.findByParentFolderOrderByUpdatedAtDesc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtDesc(folder);
-            }
-            //이름 오름차순
-            case OrderType.TITLE_ASC -> {
-                childFolders = folderDAO.findByParentFolderOrderByNameAsc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByNameAsc(folder);
-            }
-            //이름 내림차순
-            case OrderType.TITLE_DESC -> {
-                childFolders = folderDAO.findByParentFolderOrderByNameDesc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByNameDesc(folder);
-            }
-            //접근일 오래된순
-            case OrderType.APPROACHED_AT_ASC -> {
-                childFolders = folderDAO.findByParentFolderOrderByApproachedAtAsc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtAsc(folder);
-            }
-            //접근일 최신순
-            case OrderType.APPROACHED_AT_DESC -> {
-                childFolders = folderDAO.findByParentFolderOrderByApproachedAtDesc(folder);
-                yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtDesc(folder);
-            }
-        };
-        return new FolderResponse.Find(
-                null,
-                null,
-                childFolders,
-                minutesList,
-                null
-        );
+        if(isRoot){
+            List<FolderResponse.MinutesSummary> minutesList = switch (orderType) {
+                //생성일 오래된순
+                case OrderType.CREATED_AT_ASC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByCreatedAtAsc(folder.getId(), userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtAsc(folder, userId);
+                }
+                //생성일 최신순
+                case OrderType.CREATED_AT_DESC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByCreatedAtDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtDesc(folder, userId);
+                }
+                //변경일 오래된순
+                case OrderType.UPDATED_AT_ASC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByUpdatedAtAsc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtAsc(folder, userId);
+                }
+                //변경일 최신순
+                case OrderType.UPDATED_AT_DESC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByUpdatedAtDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtDesc(folder, userId);
+                }
+                //이름 오름차순
+                case OrderType.TITLE_ASC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByNameAsc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByNameAsc(folder, userId);
+                }
+                //이름 내림차순
+                case OrderType.TITLE_DESC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByNameDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByNameDesc(folder, userId);
+                }
+                //접근일 오래된순
+                case OrderType.APPROACHED_AT_ASC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByApproachedAtAsc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtAsc(folder, userId);
+                }
+                //접근일 최신순
+                case OrderType.APPROACHED_AT_DESC -> {
+                    childFolders = folderDAO.findByRootParentFolderOrderByApproachedAtDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtDesc(folder, userId);
+                }
+            };
+            return new FolderResponse.Find(
+                    null,
+                    null,
+                    childFolders,
+                    minutesList,
+                    null
+            );
+        }else{
+            List<FolderResponse.MinutesSummary> minutesList = switch (orderType) {
+                //생성일 오래된순
+                case OrderType.CREATED_AT_ASC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByCreatedAtAsc(folder.getId(), userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtAsc(folder, userId);
+                }
+                //생성일 최신순
+                case OrderType.CREATED_AT_DESC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByCreatedAtDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByCreatedAtDesc(folder, userId);
+                }
+                //변경일 오래된순
+                case OrderType.UPDATED_AT_ASC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByUpdatedAtAsc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtAsc(folder, userId);
+                }
+                //변경일 최신순
+                case OrderType.UPDATED_AT_DESC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByUpdatedAtDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByUpdatedAtDesc(folder, userId);
+                }
+                //이름 오름차순
+                case OrderType.TITLE_ASC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByNameAsc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByNameAsc(folder, userId);
+                }
+                //이름 내림차순
+                case OrderType.TITLE_DESC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByNameDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByNameDesc(folder, userId);
+                }
+                //접근일 오래된순
+                case OrderType.APPROACHED_AT_ASC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByApproachedAtAsc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtAsc(folder, userId);
+                }
+                //접근일 최신순
+                case OrderType.APPROACHED_AT_DESC -> {
+                    childFolders = folderDAO.findByParentFolderOrderByApproachedAtDesc(folder.getId(),userId);
+                    yield minutesDAO.findByFolderAndParticipantsOrderByApproachedAtDesc(folder, userId);
+                }
+            };
+            return new FolderResponse.Find(
+                    null,
+                    null,
+                    childFolders,
+                    minutesList,
+                    null
+            );
+        }
     }
 
     private void folderLogging(Long userId, String email, LocalDateTime createdAt, Long folderId, ActionType status, String description){

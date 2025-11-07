@@ -23,6 +23,7 @@ public class Minutes {
     private String summary;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    @Column(nullable = false)
     private MinutesType status;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "folder_id")

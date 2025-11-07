@@ -2,13 +2,15 @@ package com.webkit640.ilog_core_backend.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@Table(
+        name = "minutes_participant",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"minutes_id","participant_id"})
+)
 @Setter
 @Getter
 public class MinutesParticipant extends CommonParticipant {

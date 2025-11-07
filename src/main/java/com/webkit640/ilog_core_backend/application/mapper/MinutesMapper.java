@@ -20,7 +20,7 @@ public class MinutesMapper {
                 .map(this::toMinutesInMemos)
                 .toList();
         return new MinutesResponse.FindContent(
-                minutes.getId(), minutes.getTitle(), minutes.getContent(),memos);
+                minutes.getId(), minutes.getTitle(), minutes.getContent(),minutes.getCreatedAt(), minutes.getUpdatedAt(), memos);
     }
     private MinutesResponse.Memos toMinutesInMemos(Memo entity){
         return new MinutesResponse.Memos(

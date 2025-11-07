@@ -58,7 +58,8 @@ public class MinutesService {
         summaryRequest.setText(minutes.getContent());
         String summarize = summaryController.handleSimpleSummary(summaryRequest).getBody().getSummary();
         minutes.setSummary(summarize);
-        minutes.setCreatedAt(LocalDateTime.now());
+        LocalDateTime createdAt = LocalDateTime.now();
+        minutes.setCreatedAt(createdAt);
         minutes.setUpdatedAt(null);
         minutes.setStatus(request.getStatus());
         minutes.setFolder(folder);
@@ -71,15 +72,15 @@ public class MinutesService {
                     MinutesParticipant copy = new MinutesParticipant();
                     copy.setMinutes(minutes);
                     copy.setParticipant(mp.getParticipant());
-                    copy.setApproachedAt(LocalDateTime.now());
+                    copy.setApproachedAt(createdAt);
                     return copy;
                 }).toList();
-        minutesParticipantDAO.saveAll(clonedParticipants);
 
+        minutesParticipantDAO.saveAll(clonedParticipants);
         minutes.setMinutesParticipants(clonedParticipants);
 
         //--------------------------------로그-------------------------------
-        minutesLogging(owner.getId(),owner.getEmail(),minutes.getCreatedAt(),minutes.getId(),ActionType.CREATE,"정상 생성");
+        minutesLogging(owner.getId(),owner.getEmail(),createdAt,minutes.getId(),ActionType.CREATE,"정상 생성");
 
         return minutes;
     }
@@ -124,7 +125,7 @@ public class MinutesService {
         Minutes minutes = getMinutes(minutesId, ownerId);
         Member owner = memberService.getMember(ownerId);
 
-        if(minutes.getStatus().equals(MinutesType.MEETING)){
+        if(MinutesType.MEETING.equals(minutes.getStatus())){
             throw new CustomException(ErrorCode.UPDATE_DENIED);
         }
 
@@ -184,6 +185,24 @@ public class MinutesService {
         permissionPropagationService.grantToMinutes(minutesId,request.getCreateMemberId());
         //--------------수정된 회원 리스트 리턴-----------
         return minutesParticipantDAO.findByMinutes(minutes);
+    }
+
+    @Transactional
+    public void joinByInvite(Long minutesId, Long userId){
+        Minutes minutes = minutesDAO.findById(minutesId)
+                .orElseThrow(()-> new CustomException(ErrorCode.MINUTES_NOT_FOUND));
+        Member member = memberService.getMember(userId);
+
+        var existing = minutesParticipantDAO.findByMinutesAndParticipant(minutes,member);
+        if(existing.isPresent()) return;
+
+        permissionPropagationService.grantToMinutes(minutesId, userId);
+
+        MinutesParticipant mp = new MinutesParticipant();
+        mp.setMinutes(minutes);
+        mp.setParticipant(member);
+        mp.setApproachedAt(LocalDateTime.now());
+        minutesParticipantDAO.save(mp);
     }
 
     //참가자 조회

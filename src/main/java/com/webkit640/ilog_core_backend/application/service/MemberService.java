@@ -5,6 +5,7 @@ import com.webkit640.ilog_core_backend.api.request.MemberRequest;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.FolderDAO;
 import com.webkit640.ilog_core_backend.domain.repository.FolderParticipantDAO;
+import com.webkit640.ilog_core_backend.domain.repository.MinutesParticipantDAO;
 import com.webkit640.ilog_core_backend.infrastructure.security.JwtTokenProvider;
 import com.webkit640.ilog_core_backend.domain.repository.MemberDAO;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class MemberService {
     private final MemberDAO memberDAO;
     private final FolderDAO folderDAO;
     private final FolderParticipantDAO folderParticipantDAO;
+    private final MinutesParticipantDAO minutesParticipantDAO;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -138,6 +140,10 @@ public class MemberService {
         if(!member.getId().equals(currentMemberId)){
             throw new CustomException(ErrorCode.UNAUTHORIZED_DELETE);
         }
+        //모든 참가자 명단에 자신 제거, 다른 사람의 참가자 일때 영향 못미쳐서 추가한 코드
+        minutesParticipantDAO.deleteAllByParticipant(member);
+        folderParticipantDAO.deleteAllByParticipant(member);
+
         //---------------------이미지 삭제--------------------
         fileService.delete(member.getProfileImage());
         //-------------------회원 삭제 DB 반영-------------------
@@ -165,6 +171,7 @@ public class MemberService {
     }
 
     //입력받은 비밀번호를 새 비밀번호로 입력
+    @Transactional
     public Member resetPassword(MemberRequest.Reset request) {
         String token = request.getResetToken();
 

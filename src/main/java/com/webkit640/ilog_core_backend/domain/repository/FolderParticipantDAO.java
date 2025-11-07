@@ -27,4 +27,6 @@ public interface FolderParticipantDAO extends JpaRepository<FolderParticipant, L
             @Param("participant") Member participant);
 
     boolean existsByFolderAndParticipant(Folder folder, Member participant);
+
+    void deleteAllByParticipant(Member member);
 }

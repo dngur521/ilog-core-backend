@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 public class ParticipantLogListener {
     private final ParticipantLogDAO participantLogDAO;
 
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onFolderDeleted(FolderDeletedEvent event){
@@ -38,7 +39,8 @@ public class ParticipantLogListener {
             }
         }
     }
-
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onMinutesDeleted(MinutesDeletedEvent event){
         Minutes minutes = event.getMinutes();
         Member owner = minutes.getFolder().getOwner();
