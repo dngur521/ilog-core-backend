@@ -14,7 +14,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt, mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -26,7 +26,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt, mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -38,7 +38,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt,  mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -50,7 +50,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt,  mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -62,7 +62,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt,  mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -74,7 +74,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt,  mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -86,7 +86,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt,  mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -98,7 +98,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt,  mp.approachedAt
             )
             FROM Minutes m 
             JOIN m.minutesParticipants mp
@@ -113,7 +113,7 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
     @Query("""
     SELECT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, m.createdAt, mp.approachedAt
+                m.id, m.title, m.createdAt, m.updatedAt, mp.approachedAt
     )
     FROM Minutes m
     JOIN m.minutesParticipants mp

@@ -28,12 +28,29 @@ public class LinkTokenService {
     private Long ttlSeconds;
 
     public String createLink(String type, Long id) {
-        String uuid = UUID.randomUUID().toString();
+        String indexKey = "LINK_INDEX:" + type + ":" + id;
+        String existingUuid = redis.opsForValue().get(indexKey);
 
+        //-------------이미 존재하면 그대로 반환-----------------
+        if(existingUuid != null){
+            String mainKey = "LINK:" + existingUuid;
+
+            //-------------만료 시간 연장--------------------
+            redis.expire(mainKey,Duration.ofSeconds(ttlSeconds));
+            redis.expire(indexKey,Duration.ofSeconds(ttlSeconds));
+
+            return basePath + "/" + existingUuid;
+        }
+
+        //---------------새로 생성-----------------------
+        String uuid = UUID.randomUUID().toString();
         String key = "LINK:" + uuid;
         String value = type + ":" + id;
 
+        //------------------양방향 키 설정--------------------
         redis.opsForValue().set(key,value, Duration.ofSeconds(ttlSeconds));
+        redis.opsForValue().set(indexKey,uuid,Duration.ofSeconds(ttlSeconds));
+
         return basePath + "/" + uuid;
     }
 

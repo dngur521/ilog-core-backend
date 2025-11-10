@@ -151,9 +151,10 @@ public class MemberService {
     }
 
     //회원 이메일 조회 (전화 번호 -> 이메일)
-    public String getEmail(String phoneNum) {
-        Member member = memberDAO.findByPhoneNum(phoneNum).orElseThrow(()->new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-        return member.getEmail();
+    public List<String> getEmail(String phoneNum) {
+        List<Member> members = memberDAO.findAllByPhoneNum(phoneNum);
+        if(members.isEmpty()) throw new CustomException(ErrorCode.MEMBER_NOT_FOUND);
+        return members.stream().map(Member::getEmail).toList();
     }
 
     //이메일과 전화번호로 회원이 맞는지 검증

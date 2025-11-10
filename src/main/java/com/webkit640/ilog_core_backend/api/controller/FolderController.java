@@ -43,11 +43,11 @@ public class FolderController {
     //루트 프로젝트 조회
     @GetMapping
     public ResponseEntity<FolderResponse.Find> findRootFolder(
-            @ModelAttribute FolderRequest.Order request,
+            @ModelAttribute FolderRequest.Order order,
             @AuthenticationPrincipal CustomUserDetails user
     ){
         Long userId = user.getId();
-        FolderResponse.Find response = folderService.getRootFolderDetail(userId, request);
+        FolderResponse.Find response = folderService.getRootFolderDetail(userId, order);
         return ResponseEntity.ok(response);
     }
 
@@ -55,11 +55,11 @@ public class FolderController {
     @GetMapping("/{folderId}")
     public ResponseEntity<FolderResponse.Find> findFolder(
             @PathVariable("folderId") Long folderId,
-            @ModelAttribute FolderRequest.Order request,
+            @ModelAttribute FolderRequest.Order order,
             @AuthenticationPrincipal CustomUserDetails user
     ){
         Long userId = user.getId();
-        FolderResponse.Find response = folderService.getFolderDetail(folderId,userId, request);
+        FolderResponse.Find response = folderService.getFolderDetail(folderId,userId, order);
         return ResponseEntity.ok(response);
     }
     
@@ -112,11 +112,11 @@ public class FolderController {
     @PostMapping("/{folderId}/party")
     public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> createParticipant(
             @PathVariable("folderId") Long folderId,
-            @RequestBody ParticipantRequest.Create request,
+            @RequestBody ParticipantRequest.Create createMemberId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         Long ownerId = owner.getId();
-        List<FolderParticipant> folderParticipantList = folderService.createParticipant(folderId, request, ownerId);
+        List<FolderParticipant> folderParticipantList = folderService.createParticipant(folderId, createMemberId, ownerId);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }
 
@@ -135,11 +135,11 @@ public class FolderController {
     @DeleteMapping("/{folderId}/party")
     public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> deleteParticipant(
             @PathVariable("folderId") Long folderId,
-            @RequestParam ParticipantRequest.Delete request,
+            @ModelAttribute ParticipantRequest.Delete deleteMemberId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         Long ownerId = owner.getId();
-        List<FolderParticipant> folderParticipantList = folderService.deleteParticipant(folderId, request, ownerId);
+        List<FolderParticipant> folderParticipantList = folderService.deleteParticipant(folderId, deleteMemberId, ownerId);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }
 }

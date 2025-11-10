@@ -17,6 +17,8 @@ import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/members")
 @RequiredArgsConstructor
@@ -58,7 +60,7 @@ public class MemberController {
     }
 
 
-    //회원 비밀번호 입력
+    //회원 비밀번호 입력 (아.. /verify로 할껄, 회원 수정이라서 password까지 갈 필요 없을 것 같은데)
     @PostMapping("/password/input")
     public ResponseEntity<Void> inputPassword(
             @RequestBody MemberRequest.inputPassword request,
@@ -83,10 +85,10 @@ public class MemberController {
 
     //이메일 찾기
     @PostMapping("/find-email")
-    public ResponseEntity<MemberResponse.Email> findEmail(
+    public ResponseEntity<List<MemberResponse.Email>> findEmail(
             @RequestBody MemberRequest.PhoneNum phoneNum
     ){
-        String email = memberService.getEmail(phoneNum.getPhoneNum());
+        List<String> email = memberService.getEmail(phoneNum.getPhoneNum());
         return ResponseEntity.ok(memberMapper.toEmail(email));
     }
 

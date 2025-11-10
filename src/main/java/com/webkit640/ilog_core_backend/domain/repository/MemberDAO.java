@@ -1,5 +1,6 @@
 package com.webkit640.ilog_core_backend.domain.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,5 +11,5 @@ public interface MemberDAO extends JpaRepository<Member, Long> {
 
     Optional<Member> findByEmail(String email);
 
-    Optional<Member> findByPhoneNum(String phoneNum);
+    List<Member> findAllByPhoneNum(String phoneNum);
 }

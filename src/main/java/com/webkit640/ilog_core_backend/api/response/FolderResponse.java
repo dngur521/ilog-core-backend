@@ -31,6 +31,7 @@ public class FolderResponse {
         private String name;
         private LocalDateTime approachedAt;
         private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
         private String folderImage;
     }
 
@@ -41,6 +42,7 @@ public class FolderResponse {
         private String name;
         private LocalDateTime approachedAt;
         private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
     }
 
     @Data

@@ -261,12 +261,6 @@ public class FolderService {
         if (existing.isPresent()) return;
 
         permissionPropagationService.grantToFolders(folderId, userId);
-
-        FolderParticipant fp = new FolderParticipant();
-        fp.setFolder(folder);
-        fp.setParticipant(member);
-        fp.setApproachedAt(LocalDateTime.now());
-        folderParticipantDAO.save(fp);
     }
 
     //참여자 조회

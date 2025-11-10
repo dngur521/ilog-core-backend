@@ -20,7 +20,7 @@ public class Member {
     @JsonIgnore
     private String password;
     private String name;
-    @Column(unique = true,nullable = false)
+    @Column(nullable = false)
     private String phoneNum;
     private LocalDateTime joinedAt;
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)

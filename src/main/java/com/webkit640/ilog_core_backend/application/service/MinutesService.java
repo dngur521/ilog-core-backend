@@ -197,12 +197,6 @@ public class MinutesService {
         if(existing.isPresent()) return;
 
         permissionPropagationService.grantToMinutes(minutesId, userId);
-
-        MinutesParticipant mp = new MinutesParticipant();
-        mp.setMinutes(minutes);
-        mp.setParticipant(member);
-        mp.setApproachedAt(LocalDateTime.now());
-        minutesParticipantDAO.save(mp);
     }
 
     //참가자 조회

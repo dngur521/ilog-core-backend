@@ -27,8 +27,7 @@ public class MemberMapper {
         return new MemberResponse.Detail(member.getId(),member.getEmail(),member.getName(), member.getPhoneNum(), member.getJoinedAt(), folders, member.getProfileImage());
     }
 
-    public MemberResponse.Email toEmail(String email) {
-        return new MemberResponse.Email(email);
-
+    public List<MemberResponse.Email> toEmail(List<String> email) {
+        return email.stream().map(MemberResponse.Email::new).toList();
     }
 }

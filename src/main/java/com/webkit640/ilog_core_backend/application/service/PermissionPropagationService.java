@@ -110,7 +110,6 @@ public class PermissionPropagationService {
             //----------------------로그--------------------------
             Member owner = folder.getOwner();
             participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.FOLDER,ActionType.CREATE,"참여자 추가");
-
         }
     }
 
@@ -118,7 +117,7 @@ public class PermissionPropagationService {
     private void removeFolderParticipantIfPresent(Folder folder, Member member, Long ownerId){
         Member owner = folder.getOwner();
         //--------------폴더 주인 본인 삭제 X-----------------
-        if(owner.getId().equals(ownerId)){
+        if(member.getId().equals(ownerId)){
             throw new CustomException(ErrorCode.PERMISSION_SELF_DELETE_DENIED);
         }
         folderParticipantDAO.deleteByFolderAndParticipant(folder, member);
@@ -132,7 +131,7 @@ public class PermissionPropagationService {
         //----------------------로그--------------------------
         Member owner = minutes.getFolder().getOwner();
         //--------------회의록 주인 본인 삭제 X-----------------
-        if(owner.getId().equals(ownerId)){
+        if(member.getId().equals(ownerId)){
             throw new CustomException(ErrorCode.PERMISSION_SELF_DELETE_DENIED);
         }
         participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 퇴출");

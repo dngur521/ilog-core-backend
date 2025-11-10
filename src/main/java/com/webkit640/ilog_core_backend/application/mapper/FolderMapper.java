@@ -30,6 +30,7 @@ public class FolderMapper {
                         f.getName(),
                         f.getApproachedAt(),
                         f.getCreatedAt(),
+                        f.getUpdatedAt(),
                         f.getFolderImage()
                 ))
                 .toList();
@@ -38,7 +39,8 @@ public class FolderMapper {
                         m.getId(),
                         m.getName(),
                         m.getApproachedAt(),
-                        m.getCreatedAt()
+                        m.getCreatedAt(),
+                        m.getUpdatedAt()
                 ))
                 .toList();
 
@@ -66,7 +68,8 @@ public class FolderMapper {
                         m.getId(),
                         m.getName(),
                         m.getApproachedAt(),
-                        m.getCreatedAt()
+                        m.getCreatedAt(),
+                        m.getUpdatedAt()
                 ))
                 .toList();
     }
