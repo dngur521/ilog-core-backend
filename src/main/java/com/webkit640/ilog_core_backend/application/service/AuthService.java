@@ -92,8 +92,10 @@ public class AuthService {
 
         Member member = memberDAO.findById(userId)
                 .orElseThrow(()-> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+        //-------------------- role이 추가되기 전에 만든 계정때문에 있는 코드, 나중에 없애면 됨 ---------------------------
+        RoleType roleType = member.getRole() != null ? member.getRole() : RoleType.USER;
 
-        String newAccess = jwtTokenProvider.createAccessToken(userId,List.of("ROLE_" + member.getRole().name()));
+        String newAccess = jwtTokenProvider.createAccessToken(userId,List.of("ROLE_" + roleType.name()));
         String newRefresh = jwtTokenProvider.createRefreshToken(userId);
 
         Long ttlSec = (jwtTokenProvider.getExpiration(newRefresh).getTime() - System.currentTimeMillis()) / 1000;

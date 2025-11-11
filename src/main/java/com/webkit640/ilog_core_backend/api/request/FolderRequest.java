@@ -7,14 +7,12 @@ public class FolderRequest {
 
     @Data
     public static class Create {
-
         private String folderName;
         private String imageUrl;
     }
 
     @Data
     public static class Update {
-
         private String folderName;
         private String imageUrl;
     }

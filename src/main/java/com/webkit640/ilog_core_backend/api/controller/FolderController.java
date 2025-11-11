@@ -112,11 +112,11 @@ public class FolderController {
     @PostMapping("/{folderId}/party")
     public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.FolderParticipant>> createParticipant(
             @PathVariable("folderId") Long folderId,
-            @RequestBody ParticipantRequest.Create createMemberId,
+            @RequestBody ParticipantRequest.Create createMemberEmail,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         Long ownerId = owner.getId();
-        List<FolderParticipant> folderParticipantList = folderService.createParticipant(folderId, createMemberId, ownerId);
+        List<FolderParticipant> folderParticipantList = folderService.createParticipant(folderId, createMemberEmail, ownerId);
         return ResponseEntity.ok(participantMapper.toFolderDetail(folderParticipantList));
     }
 

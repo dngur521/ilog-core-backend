@@ -7,14 +7,14 @@ public class AuthRequest {
 
     @Data
     public static class Login {
-
+        @NotBlank
         private String email;
+        @NotBlank
         private String password;
     }
 
     @Data
     public static class refresh {
-
         @NotBlank
         private String refreshToken;
     }

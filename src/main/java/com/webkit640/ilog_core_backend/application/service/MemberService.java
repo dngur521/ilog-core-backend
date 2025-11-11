@@ -109,10 +109,15 @@ public class MemberService {
             member.setName(request.getName());
         }
 
-        //-----------------비밀번호가 존재하고 입력한 비밀번호들이 같아야 변경 ------------------
+        //-----------------비밀번호가 존재할 때만 변경 ------------------
         if(request.getNewPassword() != null && request.getCheckPassword() != null){
+            //---------------- 입력 비밀번호가 같은지 -------------------------
             if(!request.getNewPassword().equals(request.getCheckPassword())){
                 throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH);
+            }
+            //------------------이전 비밀번호와 다른지 ------------------------
+            if(passwordEncoder.matches( request.getNewPassword(), member.getPassword())){
+                throw new CustomException(ErrorCode.SAME_PASSWORD);
             }
             member.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
@@ -188,10 +193,13 @@ public class MemberService {
         Long userId = jwtTokenProvider.getUserId(token);
         Member member = memberDAO.findById(userId)
                 .orElseThrow(()-> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
-
         //------------------- 비밀번호 중복 체크 -------------------
         if(!request.getNewPassword().equals(request.getCheckPassword())){
             throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
+        //------------------- 현재 비밀번호와 매치해서 같으면 에러 ---------------------------
+        if(passwordEncoder.matches( request.getNewPassword(), member.getPassword())){
+            throw new CustomException(ErrorCode.SAME_PASSWORD);
         }
         //------------------- 비밀번호 암호화 및 저장 -------------------
         member.setPassword(passwordEncoder.encode(request.getNewPassword()));

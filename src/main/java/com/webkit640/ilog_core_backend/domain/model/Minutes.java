@@ -30,4 +30,6 @@ public class Minutes {
     private Folder folder;
     @OneToMany(mappedBy = "minutes", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<MinutesParticipant> minutesParticipants = new ArrayList<>();
+    @OneToMany(mappedBy = "minutes", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Memo> memos = new ArrayList<>();
 }

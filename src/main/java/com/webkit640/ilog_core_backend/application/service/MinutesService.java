@@ -1,6 +1,7 @@
 package com.webkit640.ilog_core_backend.application.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.webkit640.ilog_core_backend.SummaryController;
@@ -30,6 +31,7 @@ public class MinutesService {
     private final FolderDAO folderDAO;
     private final MinutesLogDAO minutesLogDAO;
     private final MinutesParticipantDAO minutesParticipantDAO;
+    private final MemberDAO memberDAO;
     private final MemberService memberService;
     private final PermissionPropagationService permissionPropagationService;
     private final MinutesMapper minutesMapper;
@@ -61,23 +63,36 @@ public class MinutesService {
         LocalDateTime createdAt = LocalDateTime.now();
         minutes.setCreatedAt(createdAt);
         minutes.setUpdatedAt(null);
-        minutes.setStatus(request.getStatus());
+        if(MinutesType.MEETING.equals(request.getStatus())){
+            minutes.setStatus(MinutesType.MEETING);
+        }else{
+            minutes.setStatus(MinutesType.NO_MEETING);
+        }
         minutes.setFolder(folder);
 
         minutesDAO.save(minutes);
 
         //--------------------------folder에게 particiant를 물려받음----------------
-        List<MinutesParticipant> clonedParticipants = folder.getFolderParticipants().stream()
-                .map(mp->{
-                    MinutesParticipant copy = new MinutesParticipant();
-                    copy.setMinutes(minutes);
-                    copy.setParticipant(mp.getParticipant());
-                    copy.setApproachedAt(createdAt);
-                    return copy;
-                }).toList();
+//        List<MinutesParticipant> clonedParticipants = folder.getFolderParticipants().stream()
+//                .map(mp->{
+//                    MinutesParticipant copy = new MinutesParticipant();
+//                    copy.setMinutes(minutes);
+//                    copy.setParticipant(mp.getParticipant());
+//                    copy.setApproachedAt(createdAt);
+//                    return copy;
+//                }).toList();
 
-        minutesParticipantDAO.saveAll(clonedParticipants);
-        minutes.setMinutesParticipants(clonedParticipants);
+        List<MinutesParticipant> participants = new ArrayList<>(List.of());
+
+        MinutesParticipant copy = new MinutesParticipant();
+        copy.setMinutes(minutes);
+        copy.setParticipant(owner);
+        copy.setApproachedAt(createdAt);
+
+        participants.add(copy);
+
+        minutesParticipantDAO.saveAll(participants);
+        minutes.setMinutesParticipants(participants);
 
         //--------------------------------로그-------------------------------
         minutesLogging(owner.getId(),owner.getEmail(),createdAt,minutes.getId(),ActionType.CREATE,"정상 생성");
@@ -174,7 +189,8 @@ public class MinutesService {
     // 참가자 추가
     public List<MinutesParticipant> createParticipant(Long minutesId, ParticipantRequest.Create request, Long ownerId) {
         Minutes minutes = getMinutes(minutesId, ownerId);
-        Member createMember = memberService.getMember(request.getCreateMemberId());
+        Member createMember = memberDAO.findByEmail(request.getCreateMemberEmail()).orElseThrow(()->new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
         //---------------본인 인증-----------------------
         identityVerification(minutes.getFolder(), ownerId);
         //-------------------request에 맴버가 들어왔는지 확인-------------------
@@ -182,7 +198,7 @@ public class MinutesService {
         //-------------------이미 참여되어 있는지 검증-------------------
         alreadyParticipant(minutes, createMember);
         //-------------------참여자 추가-------------------
-        permissionPropagationService.grantToMinutes(minutesId,request.getCreateMemberId());
+        permissionPropagationService.grantToMinutes(minutesId,createMember.getId());
         //--------------수정된 회원 리스트 리턴-----------
         return minutesParticipantDAO.findByMinutes(minutes);
     }
@@ -221,11 +237,11 @@ public class MinutesService {
         //-------------삭제할 회원 확인-------------------
         folderParticipantRequestIsNull(deleteMember);
         //--------------회의록 주인 본인 삭제 X-----------------
-        if(minutes.getFolder().getOwner().getId().equals(ownerId)){
+        if(minutes.getFolder().getOwner().getId().equals(request.getDeleteMemberId())){
             throw new CustomException(ErrorCode.PERMISSION_SELF_DELETE_DENIED);
         }
         //----------------삭제-------------------------
-        minutesParticipantDAO.deleteByMinutesAndParticipant(minutes, deleteMember);
+        permissionPropagationService.removeGrantToMinutes(minutesId, deleteMember.getId());
         //----------------------로그--------------------------
         String email = memberService.getMember(ownerId).getEmail();
         permissionPropagationService.participantLogging(ownerId,email,LocalDateTime.now(),deleteMember.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 삭제");

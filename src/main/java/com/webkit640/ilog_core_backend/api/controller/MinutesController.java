@@ -87,11 +87,11 @@ public class MinutesController {
     @PostMapping("/{minutesId}/party")
     public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant>> createParticipant(
             @PathVariable("minutesId") Long minutesId,
-            @RequestBody ParticipantRequest.Create request,
+            @RequestBody ParticipantRequest.Create createMemberEmail,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         Long ownerId = owner.getId();
-        List<MinutesParticipant> participants = minutesService.createParticipant(minutesId, request, ownerId);
+        List<MinutesParticipant> participants = minutesService.createParticipant(minutesId, createMemberEmail, ownerId);
         return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
     }
     //조원 관리 조회
@@ -109,11 +109,11 @@ public class MinutesController {
     @DeleteMapping("/{minutesId}/party")
     public ResponseEntity<ParticipantResponse.Detail<ParticipantResponse.MinutesParticipant>> deleteParticipant(
             @PathVariable("minutesId") Long minutesId,
-            @RequestParam ParticipantRequest.Delete request,
+            @ModelAttribute ParticipantRequest.Delete deleteMemberId,
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         Long ownerId = owner.getId();
-        List<MinutesParticipant> participants = minutesService.deleteParticipant(minutesId, request, ownerId);
+        List<MinutesParticipant> participants = minutesService.deleteParticipant(minutesId, deleteMemberId, ownerId);
         return ResponseEntity.ok(participantMapper.toMinutesDetail(participants));
     }
 }

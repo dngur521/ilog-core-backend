@@ -33,6 +33,7 @@ public class FolderService {
     private final PermissionPropagationService permissionPropagationService;
     private final FolderDAO folderDAO;
     private final MinutesDAO minutesDAO;
+    private final MemberDAO memberDAO;
     private final FolderParticipantDAO folderParticipantDAO;
     private final FolderMapper folderMapper;
     private final ParticipantMapper participantMapper;
@@ -237,7 +238,7 @@ public class FolderService {
     @Transactional
     public List<FolderParticipant> createParticipant(Long folderId, ParticipantRequest.Create request, Long ownerId) {
         Folder folder = getFolder(folderId);
-        Member createMember = memberService.getMember(request.getCreateMemberId());
+        Member createMember = memberDAO.findByEmail(request.getCreateMemberEmail()).orElseThrow(()->new CustomException(ErrorCode.MEMBER_NOT_FOUND));
 
         //---------------본인 인증-----------------------
         identityVerification(folder, ownerId);
@@ -246,7 +247,7 @@ public class FolderService {
         //-------------------이미 참여되어 있는지 검증-------------------
         alreadyParticipant(folder, createMember);
         //-------------------참여자 추가-------------------
-        permissionPropagationService.grantToFolders(folderId, request.getCreateMemberId());
+        permissionPropagationService.grantToFolders(folderId, createMember.getId());
         //--------------수정된 회원 리스트 리턴-------------
         return folderParticipantDAO.findByFolder(folder);
     }

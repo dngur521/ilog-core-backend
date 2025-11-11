@@ -12,6 +12,7 @@ public class MeetingRequest {
         private Long folderId;
         private String title;
         private String content;
+        @NotBlank
         private MinutesType status;
     }
 }

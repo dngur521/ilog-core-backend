@@ -25,7 +25,7 @@ public class LinkRedirectController {
     ){
         if(currentUser == null || currentUser.getId() == null){
             return ResponseEntity.status(302)
-                    .location(URI.create("http://localhost:3000/login?next=/redirect/" + uuid))
+                    .location(URI.create("http://localhost:5173/login?next=/redirect/" + uuid))
                     .build();
         }
         Long currentUserId = currentUser.getId();

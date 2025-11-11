@@ -15,8 +15,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -25,6 +23,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ),
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -53,8 +53,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -63,6 +61,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ),
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -90,8 +90,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -100,6 +98,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ),
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -127,8 +127,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -137,6 +135,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ),
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -165,8 +165,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -175,6 +173,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ),
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -203,8 +203,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -213,6 +211,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ),
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -240,8 +240,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -250,6 +248,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ) AS lastApproach,
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -277,8 +277,6 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
         f.id,
         f.folderName,
-        f.createdAt,
-        f.updatedAt,
         (
             SELECT fp.approachedAt
             FROM FolderParticipant fp
@@ -287,6 +285,8 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             ORDER BY fp.approachedAt DESC
             LIMIT 1
         ) AS lastApproach,
+        f.createdAt,
+        f.updatedAt,
         f.folderImage
     )
     FROM Folder f
@@ -313,7 +313,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
     //========================= 일반 폴더 조회 ===========================================
     @Query("""
         SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-            f.id, f.folderName, f.createdAt, f.updatedAt, fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
         )
         FROM Folder f
         JOIN f.folderParticipants fp
@@ -328,7 +328,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
 
     @Query("""
         SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-            f.id, f.folderName, f.createdAt, f.updatedAt, fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
         )
         FROM Folder f
         JOIN f.folderParticipants fp
@@ -342,7 +342,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
 
     @Query(value = """
         SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-            f.id, f.folderName, f.createdAt,f.updatedAt,  fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
         )
         FROM Folder f
         JOIN f.folderParticipants fp
@@ -355,7 +355,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-                f.id, f.folderName, f.createdAt,f.updatedAt,  fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
             )
             FROM Folder f
             JOIN f.folderParticipants fp
@@ -367,7 +367,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
             @Param("userId") Long userId);
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-                f.id, f.folderName, f.createdAt, f.updatedAt, fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
             )
             FROM Folder f
             JOIN f.folderParticipants fp
@@ -380,7 +380,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-                f.id, f.folderName, f.createdAt,f.updatedAt,  fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
             )
             FROM Folder f
             JOIN f.folderParticipants fp
@@ -393,7 +393,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-                f.id, f.folderName, f.createdAt, f.updatedAt, fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
             )
             FROM Folder f
             JOIN f.folderParticipants fp
@@ -406,7 +406,7 @@ public interface FolderDAO extends JpaRepository<Folder, Long> {
 
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$FolderSummary(
-                f.id, f.folderName, f.createdAt, f.updatedAt, fp.approachedAt, f.folderImage
+            f.id, f.folderName,  fp.approachedAt, f.createdAt, f.updatedAt,f.folderImage
             )
             FROM Folder f
             JOIN f.folderParticipants fp

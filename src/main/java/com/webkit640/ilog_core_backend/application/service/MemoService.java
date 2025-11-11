@@ -1,17 +1,24 @@
 package com.webkit640.ilog_core_backend.application.service;
 
-import com.webkit640.ilog_core_backend.api.exception.CustomException;
-import com.webkit640.ilog_core_backend.api.request.MemoRequest;
-import com.webkit640.ilog_core_backend.domain.model.*;
-import com.webkit640.ilog_core_backend.domain.repository.MemoDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MemoLogDAO;
-import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.webkit640.ilog_core_backend.api.exception.CustomException;
+import com.webkit640.ilog_core_backend.api.request.MemoRequest;
+import com.webkit640.ilog_core_backend.domain.model.ActionType;
+import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
+import com.webkit640.ilog_core_backend.domain.model.Member;
+import com.webkit640.ilog_core_backend.domain.model.Memo;
+import com.webkit640.ilog_core_backend.domain.model.MemoLog;
+import com.webkit640.ilog_core_backend.domain.model.MemoType;
+import com.webkit640.ilog_core_backend.domain.model.Minutes;
+import com.webkit640.ilog_core_backend.domain.repository.MemoDAO;
+import com.webkit640.ilog_core_backend.domain.repository.MemoLogDAO;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -77,7 +84,11 @@ public class MemoService {
         memo.setMinutes(minutes);
         memo.setMember(member);
         memo.setContent(request.getContent());
-        memo.setMemoType(request.getMemoType());
+        if(MemoType.SELF.equals(request.getMemoType())){
+            memo.setMemoType(MemoType.SELF);
+        }else{
+            memo.setMemoType(MemoType.EVERY);
+        }
         memo.setCreatedAt(LocalDateTime.now());
         memo.setUpdatedAt(null);
 

@@ -20,7 +20,7 @@ public class TokenStoreService {
 
     public boolean isBlacklisted(String jti) {
         String hashedKey = "BLACKLIST:" + jti;
-        return Boolean.TRUE.equals(redis.hasKey(hashedKey));
+        return redis.hasKey(hashedKey);
     }
 
     // refresh token 저장

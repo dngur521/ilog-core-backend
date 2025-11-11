@@ -29,6 +29,7 @@ public enum ErrorCode {
     PHONE_NUM_NOT_MATCH(HttpStatus.BAD_REQUEST,"전화번호가 일치하지 않습니다."),
     PASSWORD_NOT_MATCH(HttpStatus.UNAUTHORIZED, "비밀번호와 비밀번호 확인이 일치하지 않습니다."),
     CURRENT_PASSWORD_NOT_MATCH(HttpStatus.UNAUTHORIZED, "비밀번호가 일치하지 않습니다."),
+    SAME_PASSWORD(HttpStatus.UNAUTHORIZED, "현재 비밀번호와 같습니다."),
     
     //회의록 관련
     UNAUTHORIZED_UPDATE(HttpStatus.FORBIDDEN,"본인만 수정할 수 있습니다."),

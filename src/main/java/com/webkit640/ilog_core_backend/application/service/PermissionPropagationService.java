@@ -1,6 +1,8 @@
 package com.webkit640.ilog_core_backend.application.service;
 
 import com.webkit640.ilog_core_backend.api.exception.CustomException;
+import com.webkit640.ilog_core_backend.api.response.FolderResponse;
+import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +36,7 @@ public class PermissionPropagationService {
         bubbleUpToAncestors(minutes.getFolder(),member);
     }
     
-    // 하향 전파 : 폴더에 추가 -> 모든 하위 폴더에도 권한 보장
+    // 하향 전파 : 폴더에 추가 -> 모든 상위/조상 폴더에도 권한 보장
     @Transactional
     public void grantToFolders(Long folderId, Long memberId){
         Folder folder = folderDAO.findById(folderId)
@@ -43,10 +45,8 @@ public class PermissionPropagationService {
 
         //----------------현재 폴더에 권한 추가---------------------------
         addFolderParticipantIfAbsent(folder, member);
-        //------------------ 하위 폴더에도 권한 추가---------------------
-        for (Folder child : collectDescendants(folder)){
-            addFolderParticipantIfAbsent(child,member);
-        }
+        //---------------상위 폴더로 bubble-up---------------
+        bubbleUpToAncestors(folder,member);
     }
 
     // 상위 -> 하위 전체 삭제 : 폴더에서 제거 -> 모든 하위 폴더/회의록에서도 제거
@@ -75,6 +75,26 @@ public class PermissionPropagationService {
         removeFolderParticipantIfPresent(folder, member, ownerId);
     }
 
+    // 하위 -> 상위 전체 삭제 : 회의록에서 제거되어 해당 회원의 모든 회의록에 접근이 완전 불가능할때
+    //                       -> 모든 상위 폴더에서도 제거
+    @Transactional
+    public void removeGrantToMinutes(Long minutesId, Long memberId){
+
+        Minutes minutes = minutesDAO.findById(minutesId)
+                .orElseThrow(()-> new CustomException(ErrorCode.MINUTES_NOT_FOUND));
+        Member member = memberService.getMember(memberId);
+        Folder folder = minutes.getFolder();
+
+        //-------------------회의록 모두 확인 -------------------
+        //주인 id의 folderId 리스트, 해당하는 모든 minutes 에서 참가자 Id가 하나 이하로 존재하면
+        int count = minutesDAO.countByFolderAndParticipants(folder, memberId);
+        //---------------- 삭제 ---------------------
+        minutesParticipantDAO.deleteByMinutesAndParticipant(minutes, member);
+        if(count <= 1) {
+            //---------------상위 폴더로 bubble-up---------------
+            removeBubbleUpToAncestors(minutes.getFolder(), member);
+        }
+    }
     //------------------------유틸--------------------------------
 
     //-------------상위 폴더로 bubble-up---------------
@@ -82,6 +102,15 @@ public class PermissionPropagationService {
         Folder cursor = folder;
         while(cursor != null){
             addFolderParticipantIfAbsent(cursor,member);
+            cursor = cursor.getParentFolder();
+        }
+    }
+
+    //-------------상위 폴더로 bubble-up---------------
+    private void removeBubbleUpToAncestors(Folder folder, Member member){
+        Folder cursor = folder;
+        while(cursor != null){
+            folderParticipantDAO.deleteByFolderAndParticipant(folder, member);
             cursor = cursor.getParentFolder();
         }
     }
@@ -99,6 +128,7 @@ public class PermissionPropagationService {
             participantLogging(owner.getId(),owner.getEmail(),LocalDateTime.now(),member.getEmail(), ParticipantType.MINUTES, ActionType.CREATE,"참여자 추가");
         }
     }
+
     //--------------------폴더에 참여자가 있는지 확인 후, 없으면 추가----------
     private void addFolderParticipantIfAbsent(Folder folder, Member member){
         if(!folderParticipantDAO.existsByFolderAndParticipant(folder,member)){

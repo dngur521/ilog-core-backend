@@ -2,7 +2,12 @@ package com.webkit640.ilog_core_backend.domain.model;
 
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,6 +23,7 @@ public class Memo {
     private Minutes minutes;
     @ManyToOne
     private Member member;
+    @Column(nullable = false)
     private MemoType memoType;
     @Column(columnDefinition = "TEXT")
     private String content;
