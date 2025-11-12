@@ -1,24 +1,17 @@
 package com.webkit640.ilog_core_backend.application.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
+import com.webkit640.ilog_core_backend.api.exception.CustomException;
+import com.webkit640.ilog_core_backend.api.request.MemoRequest;
+import com.webkit640.ilog_core_backend.domain.model.*;
+import com.webkit640.ilog_core_backend.domain.repository.MemoDAO;
+import com.webkit640.ilog_core_backend.domain.repository.MemoLogDAO;
+import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.webkit640.ilog_core_backend.api.exception.CustomException;
-import com.webkit640.ilog_core_backend.api.request.MemoRequest;
-import com.webkit640.ilog_core_backend.domain.model.ActionType;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
-import com.webkit640.ilog_core_backend.domain.model.Member;
-import com.webkit640.ilog_core_backend.domain.model.Memo;
-import com.webkit640.ilog_core_backend.domain.model.MemoLog;
-import com.webkit640.ilog_core_backend.domain.model.MemoType;
-import com.webkit640.ilog_core_backend.domain.model.Minutes;
-import com.webkit640.ilog_core_backend.domain.repository.MemoDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MemoLogDAO;
-
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +41,7 @@ public class MemoService {
     @Transactional
     public List<Memo> updateMemo(Long minutesId, MemoRequest.Update request, Long userId) {
         //------------- 인증된 메모 반환 ------------
-        Memo memo = verifyMemo(minutesId, request.getUpdateId(), userId);
+        Memo memo = verifyMemo(minutesId, request.getId(), userId);
         //---------------------메모 수정------------------------------
         if(request.getContent() != null && !request.getContent().isBlank()){
             memo.setContent(request.getContent());
@@ -56,7 +49,17 @@ public class MemoService {
         if(request.getMemoType() != null){
             memo.setMemoType(request.getMemoType());
         }
-        if(request.getMemoType() != null && request.getContent() != null){
+        if(request.getStartIndex() != null){
+            memo.setStartIndex(request.getStartIndex());
+        }
+        if(request.getEndIndex() != null){
+            memo.setEndIndex(request.getEndIndex());
+        }
+        if(request.getPositionContent() != null && !request.getPositionContent().isBlank()){
+            memo.setPositionContent(request.getPositionContent());
+        }
+        if(request.getMemoType() != null || request.getContent() != null
+        || request.getStartIndex() != null || request.getEndIndex() != null || request.getPositionContent() != null){
             memo.setUpdatedAt(LocalDateTime.now());
         }
 
@@ -91,16 +94,19 @@ public class MemoService {
         }
         memo.setCreatedAt(LocalDateTime.now());
         memo.setUpdatedAt(null);
+        memo.setStartIndex(request.getStartIndex());
+        memo.setEndIndex(request.getEndIndex());
+        memo.setPositionContent(request.getPositionContent());
 
         memoDAO.save(memo);
         return memo;
     }
 
     // ---------------- 메모 접근 가능한지 검증 ------------------------
-    private Memo verifyMemo(Long minutesId, Long id, Long userId){
+    private Memo verifyMemo(Long minutesId, Long memoId, Long userId){
         //------------- 메모 찾기 ------------
-        Memo memo = memoDAO.findById(id).orElseThrow(()->new CustomException(ErrorCode.MEMO_NOT_FOUND));
-        //------------- 본인의 메모인지 확인 ----------------------
+        Memo memo = memoDAO.findById(memoId).orElseThrow(()->new CustomException(ErrorCode.MEMO_NOT_FOUND));
+        //------------- 본인이 작성한 메모인지 확인 ----------------------
         identityVerification(memo, userId);
         //----------------- 이 메모가 회의록의 메모인지 확인--------------
         if(!memo.getMinutes().getId().equals(minutesId)){

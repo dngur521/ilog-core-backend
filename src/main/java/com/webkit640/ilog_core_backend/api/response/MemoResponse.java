@@ -13,19 +13,20 @@ public class MemoResponse {
     @Data
     @AllArgsConstructor
     public static class Detail {
-
         private List<Summary> memos;
     }
 
     @Data
     @AllArgsConstructor
     public static class Summary {
-
         private Long id;
         private String name;
         private String content;
         private MemoType memoType;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        private Integer startIndex;
+        private Integer endIndex;
+        private String positionContent;
     }
 }

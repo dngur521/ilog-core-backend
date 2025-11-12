@@ -10,14 +10,22 @@ public class MemoRequest {
         private String content;
         @NotBlank
         private MemoType memoType;
+
+        private int startIndex;
+        private int endIndex;
+        private String positionContent;
     }
 
     @Data
     public static class Update {
-        private Long updateId;
+        private Long id;
         private String content;
         @NotBlank
         private MemoType memoType;
+
+        private Integer startIndex;
+        private Integer endIndex;
+        private String positionContent;
     }
 
     @Data

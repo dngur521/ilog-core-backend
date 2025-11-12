@@ -26,7 +26,10 @@ public class MemoMapper {
                 memo.getContent(),
                 memo.getMemoType(),
                 memo.getCreatedAt(),
-                memo.getUpdatedAt()
+                memo.getUpdatedAt(),
+                memo.getStartIndex(),
+                memo.getEndIndex(),
+                memo.getPositionContent()
         );
     }
 }

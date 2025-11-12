@@ -1,6 +1,7 @@
 package com.webkit640.ilog_core_backend.application.service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
@@ -61,7 +62,9 @@ public class FolderService {
         newFolder.setCreatedAt(createdAt);
         newFolder.setUpdatedAt(null);
         //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
-        List<FolderParticipant> clonedParticipants = cloneFolderParticipants(newFolder, folder, createdAt);
+//        List<FolderParticipant> clonedParticipants = cloneFolderParticipants(newFolder, folder, createdAt);
+        //------------------------ 폴더 주인만 참가자 -------------------------------
+        List<FolderParticipant> clonedParticipants = folderParticipants(newFolder, folder, createdAt);
         newFolder.setFolderParticipants(clonedParticipants);
 
         //폴더 사진 생성
@@ -118,6 +121,8 @@ public class FolderService {
         Member owner = memberService.getMember(ownerId);
         //-------------------본인 인증-------------------
         identityVerification(folder, owner.getId());
+        //----------------참가자 인증--------------------
+        //identityParticipant(folder, ownerId);
         //-------------------폴더 수정-------------------
         if(request.getFolderName() != null && !request.getFolderName().isBlank()){
             folder.setFolderName(request.getFolderName());
@@ -194,6 +199,20 @@ public class FolderService {
                 }).toList();
     }
 
+    //부모 참여자 리스트 참조 X ver
+    private List<FolderParticipant> folderParticipants(Folder newFolder, Folder folder, LocalDateTime createdAt){
+        List<FolderParticipant> participants = new ArrayList<>(List.of());
+
+        FolderParticipant copy = new FolderParticipant();
+        copy.setFolder(newFolder);
+        copy.setParticipant(folder.getOwner());
+        copy.setApproachedAt(createdAt);
+
+        participants.add(copy);
+
+        return participants;
+    }
+
     //폴더가 있는지 확인
     private Folder getFolder(Long folderId){
         return folderDAO.findByIdWithParticipantsAndChildren(folderId)
@@ -223,7 +242,7 @@ public class FolderService {
         for(Folder child : folder.getChildFolders()){
             deleteFolderRecursively(child);
         }
-
+        //---------------- 미리 연관 폴더 전부 가져오기 -------------------
         Folder fullyLoadedFolder = folderDAO.findByIdWithOwnerAndParticipants(folder.getId())
                         .orElseThrow(()->new CustomException(ErrorCode.FOLDER_NOT_FOUND));
 
@@ -252,6 +271,7 @@ public class FolderService {
         return folderParticipantDAO.findByFolder(folder);
     }
 
+    //------------------- 링크로 초대받았을때 자동으로 참가자 등록 -------------------------
     @Transactional
     public void joinByInvite(Long folderId, Long userId) {
         Folder folder = folderDAO.findById(folderId)
@@ -266,10 +286,10 @@ public class FolderService {
 
     //참여자 조회
     public ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant> getParticipant(
-            Long folderId, Long ownerId
+            Long folderId, Long participantId
     ){
         Folder folder = getFolder(folderId);
-        identityParticipant(folder, ownerId);
+        identityParticipant(folder, participantId);
         var participants = folderParticipantDAO.findByFolder(folder);
 
         String link = linkTokenService.createLink("FOLDER",folderId);
