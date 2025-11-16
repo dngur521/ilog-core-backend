@@ -14,7 +14,6 @@ import lombok.Setter;
 @Setter
 @Getter
 public class MinutesParticipant extends CommonParticipant {
-
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "minutes_id")

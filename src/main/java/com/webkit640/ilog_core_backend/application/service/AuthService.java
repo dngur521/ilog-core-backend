@@ -96,12 +96,12 @@ public class AuthService {
         RoleType roleType = member.getRole() != null ? member.getRole() : RoleType.USER;
 
         String newAccess = jwtTokenProvider.createAccessToken(userId,List.of("ROLE_" + roleType.name()));
-        String newRefresh = jwtTokenProvider.createRefreshToken(userId);
+//        String newRefresh = jwtTokenProvider.createRefreshToken(userId);
 
-        Long ttlSec = (jwtTokenProvider.getExpiration(newRefresh).getTime() - System.currentTimeMillis()) / 1000;
-        tokenStoreService.saveRefresh(userId,newRefresh,ttlSec);
+        Long ttlSec = (jwtTokenProvider.getExpiration(refresh).getTime() - System.currentTimeMillis()) / 1000;
+        tokenStoreService.saveRefresh(userId,refresh,ttlSec);
 
-        return new AuthResponse.Token(newAccess,newRefresh);
+        return new AuthResponse.Token(newAccess,refresh);
     }
 
     private void loginLogging(Long userId, String email, ActionType actionType, String description){

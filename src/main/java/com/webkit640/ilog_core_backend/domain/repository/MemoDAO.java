@@ -1,6 +1,7 @@
 package com.webkit640.ilog_core_backend.domain.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -10,4 +11,10 @@ import com.webkit640.ilog_core_backend.domain.model.Minutes;
 public interface MemoDAO extends JpaRepository<Memo, Long> {
 
     List<Memo> findAllByMinutes(Minutes minutes);
+
+    Memo findTopByMinutesIdOrderByLocalIdDesc(Long minutesId);
+
+    void deleteAllByMinutes_Id(Long minutesId);
+
+    Optional<Memo> findByMinutes_IdAndLocalId(Long minutesId, Long memoId);
 }

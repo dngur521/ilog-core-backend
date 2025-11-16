@@ -1,7 +1,10 @@
 package com.webkit640.ilog_core_backend.api.controller;
 
 import java.util.List;
+import java.util.Map;
 
+import com.webkit640.ilog_core_backend.application.service.MinutesLockService;
+import com.webkit640.ilog_core_backend.domain.model.MinutesHistory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +29,7 @@ public class MinutesController {
     //--------------회의록------------------
     private final MinutesService minutesService;
     private final MinutesMapper minutesMapper;
+    private final MinutesLockService minutesLockService;
 
     //회의록 생성
     @PostMapping("/{folderId}")
@@ -43,10 +47,10 @@ public class MinutesController {
     @GetMapping("/{minutesId}")
     public ResponseEntity<MinutesResponse.FindContent> findContentMinutes(
             @PathVariable("minutesId") Long minutesId,
-            @AuthenticationPrincipal CustomUserDetails user
+            @AuthenticationPrincipal CustomUserDetails participant
     ){
-        Long userId = user.getId();
-        MinutesResponse.FindContent response = minutesService.getMinutesDetail(minutesId,userId);
+        Long participantId = participant.getId();
+        MinutesResponse.FindContent response = minutesService.getMinutesDetail(minutesId,participantId);
         return ResponseEntity.ok(response);
     }
     //회의록 요약 조회
@@ -64,12 +68,14 @@ public class MinutesController {
     public ResponseEntity<MinutesResponse.Update> updateMinutes(
             @PathVariable("minutesId") Long minutesId,
             @RequestBody MinutesRequest.Update request,
-            @AuthenticationPrincipal CustomUserDetails owner
+            @AuthenticationPrincipal CustomUserDetails participant
     ){
-        Long ownerId = owner.getId();
-        Minutes minutes = minutesService.updateMinutes(minutesId ,request, ownerId);
+        Long participantId = participant.getId();
+        Minutes minutes = minutesService.updateMinutes(minutesId ,request, participantId);
         return ResponseEntity.ok(minutesMapper.toUpdate(minutes));
     }
+
+
     //회의록 삭제
     @DeleteMapping("/{minutesId}")
     public ResponseEntity<Void> deleteMinutes(
@@ -79,6 +85,78 @@ public class MinutesController {
         Long ownerId = owner.getId();
         minutesService.deleteMinutes(minutesId, ownerId);
         return ResponseEntity.noContent().build();
+    }
+
+    //회의록 요약
+    @PostMapping("/{minutesId}/summary")
+    public ResponseEntity<Void> summaryMinutes(
+            @PathVariable("minutesId") Long minutesId,
+            @AuthenticationPrincipal CustomUserDetails participant
+    ){
+        Long participantId = participant.getId();
+        minutesService.summaryMinutes(minutesId,participantId);
+        return ResponseEntity.noContent().build();
+    }
+
+    //-------------------- Lock 관리 --------------------------------------
+    @PostMapping("/{minutesId}/lock")
+    public ResponseEntity<MinutesResponse.Lock> lockMinutes(
+            @PathVariable Long minutesId,
+            @AuthenticationPrincipal CustomUserDetails user
+    ){
+        Long userId = user.getId();
+        String token = minutesLockService.acquire(minutesId,userId);
+        return ResponseEntity.ok(minutesMapper.toToken(token));
+    }
+
+    @GetMapping("/{minutesId}/lock")
+    public ResponseEntity<MinutesResponse.LockStatus> getLockStatus(
+            @PathVariable Long minutesId
+    ){
+        MinutesResponse.LockStatus response = minutesLockService.getLockStatus(minutesId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{minutesId}/lock/refresh")
+    public ResponseEntity<Void> refreshLock(
+            @PathVariable Long minutesId,
+            @RequestBody MinutesRequest.Lock request
+    ){
+        minutesLockService.refresh(minutesId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{minutesId}/lock/release")
+    public ResponseEntity<Void> releaseLock(
+            @PathVariable Long minutesId,
+            @RequestBody MinutesRequest.Lock request
+    ){
+        minutesLockService.release(minutesId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    //-----------------------History 관리 ----------------------------------
+    //history 조회
+    @GetMapping("/{minutesId}/history")
+    public ResponseEntity<List<MinutesResponse.FindHistory>> findMinutesHistory(
+            @PathVariable("minutesId") Long minutesId,
+            @AuthenticationPrincipal CustomUserDetails participant
+    ){
+        Long participantId = participant.getId();
+        List<MinutesResponse.FindHistory> response = minutesService.getMinutesHistory(minutesId,participantId);
+        return ResponseEntity.ok(response);
+    }
+
+    //이전 버전으로 revert
+    @PostMapping("/{minutesId}/history/{historyId}")
+    public ResponseEntity<MinutesResponse.FindHistory> revertMinutesHistory(
+            @PathVariable("minutesId") Long minutesId,
+            @PathVariable("historyId") Long historyId,
+            @AuthenticationPrincipal CustomUserDetails participant
+    ){
+        Long participantId = participant.getId();
+        MinutesResponse.FindHistory response = minutesService.rollbackMinutes(historyId, minutesId,participantId);
+        return ResponseEntity.ok(response);
     }
 
     //---------------조원 권한 관리-----------------------------

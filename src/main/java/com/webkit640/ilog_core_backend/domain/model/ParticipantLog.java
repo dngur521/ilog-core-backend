@@ -8,7 +8,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class ParticipantLog extends CommonLog {
-
     private String participantEmail;
     private ParticipantType participantType;
 }

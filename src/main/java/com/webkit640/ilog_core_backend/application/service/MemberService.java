@@ -63,7 +63,7 @@ public class MemberService {
 
         root.setParentFolder(null);
         root.setOwner(member);
-        root.setFolderName("Root");
+        root.setFolderName(member.getName() + "님의 프로젝트");
         root.setCreatedAt(LocalDateTime.now());
         root.setUpdatedAt(null);
 

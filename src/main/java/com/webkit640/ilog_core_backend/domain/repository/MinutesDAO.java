@@ -12,26 +12,33 @@ import org.springframework.data.repository.query.Param;
 
 public interface MinutesDAO extends JpaRepository<Minutes, Long> {
 
-    @Query(value = """
-            SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
-                m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
-            )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
-            ORDER BY m.createdAt ASC""")
+    @Query("""
+        SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
+            m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
+        )
+        FROM Minutes m
+        JOIN m.folder f
+        JOIN f.folderParticipants fp
+        LEFT JOIN m.minutesParticipants mp 
+               ON mp.participant.id = :userId
+        WHERE f = :folder
+        AND fp.participant.id = :userId
+        ORDER BY m.createdAt ASC
+    """)
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByCreatedAtAsc(
-            @Param("folder") Folder folder, @Param("userId") Long userId);
-
+            @Param("folder") Folder folder,
+            @Param("userId") Long userId);
     @Query(value = """
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
                 m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
             )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
+            FROM Minutes m
+            JOIN m.folder f
+            JOIN f.folderParticipants fp
+            LEFT JOIN m.minutesParticipants mp 
+                   ON mp.participant.id = :userId
+            WHERE f = :folder
+            AND fp.participant.id = :userId
             ORDER BY m.createdAt DESC""")
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByCreatedAtDesc(
             @Param("folder") Folder folder, @Param("userId") Long userId);
@@ -40,10 +47,13 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
                 m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
             )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
+            FROM Minutes m
+            JOIN m.folder f
+            JOIN f.folderParticipants fp
+            LEFT JOIN m.minutesParticipants mp 
+                   ON mp.participant.id = :userId
+            WHERE f = :folder
+            AND fp.participant.id = :userId
             ORDER BY m.updatedAt ASC""")
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByUpdatedAtAsc(
             @Param("folder") Folder folder, @Param("userId") Long userId);
@@ -52,10 +62,13 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
                 m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
             )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
+            FROM Minutes m
+            JOIN m.folder f
+            JOIN f.folderParticipants fp
+            LEFT JOIN m.minutesParticipants mp 
+                   ON mp.participant.id = :userId
+            WHERE f = :folder
+            AND fp.participant.id = :userId
             ORDER BY m.updatedAt DESC""")
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByUpdatedAtDesc(
             @Param("folder") Folder folder, @Param("userId") Long userId);
@@ -64,10 +77,13 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
                 m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
             )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
+            FROM Minutes m
+            JOIN m.folder f
+            JOIN f.folderParticipants fp
+            LEFT JOIN m.minutesParticipants mp 
+                   ON mp.participant.id = :userId
+            WHERE f = :folder
+            AND fp.participant.id = :userId
             ORDER BY m.title ASC""")
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByNameAsc(
             @Param("folder") Folder folder, @Param("userId") Long userId);
@@ -76,10 +92,13 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
                 m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
             )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
+            FROM Minutes m
+            JOIN m.folder f
+            JOIN f.folderParticipants fp
+            LEFT JOIN m.minutesParticipants mp 
+                   ON mp.participant.id = :userId
+            WHERE f = :folder
+            AND fp.participant.id = :userId
             ORDER BY m.title DESC""")
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByNameDesc(
             @Param("folder") Folder folder, @Param("userId") Long userId);
@@ -88,10 +107,13 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
                 m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
             )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
+            FROM Minutes m
+            JOIN m.folder f
+            JOIN f.folderParticipants fp
+            LEFT JOIN m.minutesParticipants mp 
+                   ON mp.participant.id = :userId
+            WHERE f = :folder
+            AND fp.participant.id = :userId
             ORDER BY mp.approachedAt ASC""")
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByApproachedAtAsc(
             @Param("folder") Folder folder, @Param("userId") Long userId);
@@ -100,10 +122,13 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
             SELECT DISTINCT new com.webkit640.ilog_core_backend.api.response.FolderResponse$MinutesSummary(
                 m.id, m.title, mp.approachedAt, m.createdAt, m.updatedAt
             )
-            FROM Minutes m 
-            JOIN m.minutesParticipants mp
-            WHERE m.folder = :folder 
-            AND mp.participant.id = :userId
+            FROM Minutes m
+            JOIN m.folder f
+            JOIN f.folderParticipants fp
+            LEFT JOIN m.minutesParticipants mp 
+                   ON mp.participant.id = :userId
+            WHERE f = :folder
+            AND fp.participant.id = :userId
             ORDER BY mp.approachedAt DESC""")
     List<FolderResponse.MinutesSummary> findByFolderAndParticipantsOrderByApproachedAtDesc(
             @Param("folder") Folder folder, @Param("userId") Long userId);

@@ -17,7 +17,13 @@ public class MinutesRequest {
     public static class Update {
         private String title;
         private String content;
+
+        private String token;
     }
 
+    @Data
+    public static class Lock{
+        private String token;
+    }
 }
 

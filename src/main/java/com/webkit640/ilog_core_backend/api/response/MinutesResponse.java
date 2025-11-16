@@ -46,6 +46,9 @@ public class MinutesResponse {
         private String name;
         private MemoType memoType;
         private String content;
+        private Integer startIndex;
+        private Integer endIndex;
+        private String positionContent;
     }
 
     @Data
@@ -55,5 +58,34 @@ public class MinutesResponse {
         private String title;
         private String content;
         private String summary;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class FindHistory {
+        private Long id;
+        private Long minutesId;
+        private Long historyId;
+        private String title;
+        private String content;
+        private String summary;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+        private List<Memos> memos;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class Lock {
+        private String token;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class LockStatus{
+        private boolean locked;
+        private Long remainSeconds;
+        private Long userId;
+        private String userName;
     }
 }

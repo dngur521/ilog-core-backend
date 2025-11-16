@@ -24,5 +24,12 @@ public class LogResponse {
         private Long id;
         private LocalDateTime createdAt;
         private ActionType status;
+
+        private String minutesTitle;
+        public Log(Long id, LocalDateTime createdAt, ActionType status) {
+            this.id = id;
+            this.createdAt = createdAt;
+            this.status = status;
+        }
     }
 }

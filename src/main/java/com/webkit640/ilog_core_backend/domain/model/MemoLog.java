@@ -8,7 +8,6 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MemoLog extends CommonLog {
-
     private Long minutesId;
     private MemoType memoType;
 }

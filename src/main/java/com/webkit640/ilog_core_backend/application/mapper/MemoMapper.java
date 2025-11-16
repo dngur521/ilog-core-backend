@@ -21,7 +21,7 @@ public class MemoMapper {
 
     public MemoResponse.Summary toSummary(Memo memo) {
         return new MemoResponse.Summary(
-                memo.getId(),
+                memo.getLocalId(),
                 memo.getMember().getName(),
                 memo.getContent(),
                 memo.getMemoType(),

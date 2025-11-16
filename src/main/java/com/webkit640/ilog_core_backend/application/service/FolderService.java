@@ -61,9 +61,9 @@ public class FolderService {
         LocalDateTime createdAt = LocalDateTime.now();
         newFolder.setCreatedAt(createdAt);
         newFolder.setUpdatedAt(null);
-        //부모의 참여자 리스트를 참조하기에 참여자 변경 시 부모/자식 폴더가 같이 바뀜
+        //---------------------- 부모의 참여자 리스트를 참조하여 생성 ----------------------------
 //        List<FolderParticipant> clonedParticipants = cloneFolderParticipants(newFolder, folder, createdAt);
-        //------------------------ 폴더 주인만 참가자 -------------------------------
+        //------------------------ 폴더 주인만 참가자로 -------------------------------
         List<FolderParticipant> clonedParticipants = folderParticipants(newFolder, folder, createdAt);
         newFolder.setFolderParticipants(clonedParticipants);
 
@@ -76,7 +76,7 @@ public class FolderService {
         folderDAO.save(newFolder);
 
         //------------------------ 로그 -------------------------
-        folderLogging(owner.getId(),owner.getEmail(),createdAt,newFolder.getId(), ActionType.CREATE,"정상 생성");
+        folderLogging(owner.getId(),owner.getEmail(),createdAt,newFolder.getFolderName(), ActionType.CREATE,"정상 생성");
 
         return newFolder;
     }
@@ -120,9 +120,9 @@ public class FolderService {
         Folder folder = getFolder(folderId);
         Member owner = memberService.getMember(ownerId);
         //-------------------본인 인증-------------------
-        identityVerification(folder, owner.getId());
+//        identityVerification(folder, owner.getId());
         //----------------참가자 인증--------------------
-        //identityParticipant(folder, ownerId);
+        identityParticipant(folder, ownerId);
         //-------------------폴더 수정-------------------
         if(request.getFolderName() != null && !request.getFolderName().isBlank()){
             folder.setFolderName(request.getFolderName());
@@ -145,7 +145,7 @@ public class FolderService {
             approachedTime(folder, owner);
 
             //-------------------로그 남기기------------------
-            folderLogging(owner.getId(), owner.getEmail(),folder.getUpdatedAt(),folder.getId(),ActionType.UPDATE,"정상 수정");
+            folderLogging(owner.getId(), owner.getEmail(),folder.getUpdatedAt(),folder.getFolderName(),ActionType.UPDATE,"정상 수정");
         }
 
         return folder;
@@ -249,7 +249,7 @@ public class FolderService {
         eventPublisher.publishEvent(new FolderDeletedEvent(this, fullyLoadedFolder));
 
         //------------------- 로그 -------------------
-        folderLogging(folder.getOwner().getId(), folder.getOwner().getEmail(),LocalDateTime.now(),folder.getId(),ActionType.DELETE,"정상 삭제");
+        folderLogging(folder.getOwner().getId(), folder.getOwner().getEmail(),LocalDateTime.now(),folder.getFolderName(),ActionType.DELETE,"정상 삭제");
         folderDAO.delete(folder);
     }
 
@@ -294,6 +294,7 @@ public class FolderService {
 
         String link = linkTokenService.createLink("FOLDER",folderId);
         return participantMapper.toFolderDetailLink(participants, link);
+
     }
     //참여자 삭제
     @Transactional
@@ -451,29 +452,15 @@ public class FolderService {
         }
     }
 
-    private void folderLogging(Long userId, String email, LocalDateTime createdAt, Long folderId, ActionType status, String description){
+    private void folderLogging(Long userId, String email, LocalDateTime createdAt, String folderTitle, ActionType status, String description){
         FolderLog folderLog = new FolderLog();
         folderLog.setUserId(userId);
         folderLog.setEmail(email);
         folderLog.setCreatedAt(createdAt);
-        folderLog.setFolderId(folderId);
+        folderLog.setFolderTitle(folderTitle);
         folderLog.setStatus(status);
         folderLog.setDescription(description);
 
         folderLogDAO.save(folderLog);
-    }
-
-    //참여자 로그 남기기
-    public void participantLogging(Long userId, String email, LocalDateTime createdAt, String folderParticipantEmail, ParticipantType participantType, ActionType status, String description){
-        ParticipantLog minutesParticipantLog = new ParticipantLog();
-        minutesParticipantLog.setUserId(userId);
-        minutesParticipantLog.setEmail(email);
-        minutesParticipantLog.setCreatedAt(createdAt);
-        minutesParticipantLog.setParticipantEmail(folderParticipantEmail);
-        minutesParticipantLog.setParticipantType(participantType);
-        minutesParticipantLog.setStatus(status);
-        minutesParticipantLog.setDescription(description);
-
-        participantLogDAO.save(minutesParticipantLog);
     }
 }

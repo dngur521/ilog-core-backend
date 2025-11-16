@@ -15,7 +15,7 @@ public enum ErrorCode {
     VIEW_DENIED(HttpStatus.FORBIDDEN,"조회 권한이 없습니다."),
     INVALID_TOKEN(HttpStatus.UNAUTHORIZED,"유효하지 않은 토큰입니다."),
     TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED,"토큰이 만료되었습니다."),
-
+    
     //이미지 업로드 관련
     FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR,"파일을 업로드 중 오류가 발생했습니다."),
     FILE_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR,"파일 삭제 중 오류가 발생했습니다."),
@@ -39,7 +39,8 @@ public enum ErrorCode {
     ROOT_FOLDER_DELETE_DENIED(HttpStatus.FORBIDDEN,"루트 프로젝트를 삭제할 수 없습니다."),
     FOLDER_NOT_FOUND(HttpStatus.NOT_FOUND,"프로젝트를 찾을 수 없습니다."),
     MEMO_NOT_FOUND(HttpStatus.NOT_FOUND,"메모를 찾을 수 없습니다."),
-
+    HISTORY_NOT_FOUND(HttpStatus.NOT_FOUND,"히스토리를 찾을 수 없습니다."),
+    LOCK_DENIED(HttpStatus.FORBIDDEN,"다른 사용자가 수정중이기에 접근이 거부되었습니다."),
     //참여자 관련
     ALREADY_PARTICIPANT(HttpStatus.CONFLICT,"이미 참여자로 등록된 회원입니다." ),
     PARTICIPANT_NOT_FOUND(HttpStatus.NOT_FOUND,"참여자를 찾을 수 없습니다." ),

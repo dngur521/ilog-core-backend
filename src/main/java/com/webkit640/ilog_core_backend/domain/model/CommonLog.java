@@ -2,6 +2,7 @@ package com.webkit640.ilog_core_backend.domain.model;
 
 import java.time.LocalDateTime;
 
+import com.webkit640.ilog_core_backend.api.response.LogResponse;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,4 +23,8 @@ public abstract class CommonLog {
     private LocalDateTime createdAt;
     private String description;
     private ActionType status;
+
+    public LogResponse.Log toDto(){
+        return new LogResponse.Log(id,createdAt, status);
+    }
 }

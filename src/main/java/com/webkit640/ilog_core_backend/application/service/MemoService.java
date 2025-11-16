@@ -5,7 +5,6 @@ import com.webkit640.ilog_core_backend.api.request.MemoRequest;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.MemoDAO;
 import com.webkit640.ilog_core_backend.domain.repository.MemoLogDAO;
-import com.webkit640.ilog_core_backend.infrastructure.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -84,16 +83,21 @@ public class MemoService {
     //----------- 메모 생성 ------------------
     private Memo creatingMemo(Member member, MemoRequest.Create request, Minutes minutes){
         Memo memo = new Memo();
+        Long nextLocalId = getNextLocalId(minutes.getId());
+        memo.setLocalId(nextLocalId);
+
         memo.setMinutes(minutes);
         memo.setMember(member);
         memo.setContent(request.getContent());
-        if(MemoType.SELF.equals(request.getMemoType())){
-            memo.setMemoType(MemoType.SELF);
-        }else{
-            memo.setMemoType(MemoType.EVERY);
-        }
+
+        memo.setMemoType(
+                MemoType.SELF.equals(request.getMemoType())
+                ? MemoType.SELF : MemoType.EVERY
+        );
+
         memo.setCreatedAt(LocalDateTime.now());
         memo.setUpdatedAt(null);
+
         memo.setStartIndex(request.getStartIndex());
         memo.setEndIndex(request.getEndIndex());
         memo.setPositionContent(request.getPositionContent());
@@ -103,11 +107,11 @@ public class MemoService {
     }
 
     // ---------------- 메모 접근 가능한지 검증 ------------------------
-    private Memo verifyMemo(Long minutesId, Long memoId, Long userId){
+    private Memo verifyMemo(Long minutesId, Long memoId, Long participantId){
         //------------- 메모 찾기 ------------
-        Memo memo = memoDAO.findById(memoId).orElseThrow(()->new CustomException(ErrorCode.MEMO_NOT_FOUND));
+        Memo memo = memoDAO.findByMinutes_IdAndLocalId(minutesId, memoId).orElseThrow(()->new CustomException(ErrorCode.MEMO_NOT_FOUND));
         //------------- 본인이 작성한 메모인지 확인 ----------------------
-        identityVerification(memo, userId);
+        identityVerification(memo, participantId);
         //----------------- 이 메모가 회의록의 메모인지 확인--------------
         if(!memo.getMinutes().getId().equals(minutesId)){
             throw new CustomException(ErrorCode.MINUTES_NOT_MATCH);
@@ -116,11 +120,21 @@ public class MemoService {
     }
 
     //------------ 누가 메모를 만들었는지 검증 ----------------
-    private void identityVerification(Memo memo, Long ownerId){
-        if(!memo.getMember().getId().equals(ownerId)){
+    private void identityVerification(Memo memo, Long participantId){
+        if(!memo.getMember().getId().equals(participantId)){
             throw new CustomException(ErrorCode.UPDATE_DENIED);
         }
     }
+
+    //----------------다음 localId 전달 ----------------
+    private Long getNextLocalId(Long minutesId) {
+        Memo memo = memoDAO.findTopByMinutesIdOrderByLocalIdDesc(minutesId);
+        if(memo == null || memo.getLocalId() == null){
+            return 1L;
+        }
+        return  memo.getLocalId() + 1;
+    }
+
 
     private void memoLogging(Long userId, String email, LocalDateTime createdAt, Long minutesId, ActionType actionType, MemoType memoType, String description){
         MemoLog memoLog = new MemoLog();

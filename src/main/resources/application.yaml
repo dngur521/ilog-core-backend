@@ -27,6 +27,7 @@ spring:
         password: kumoh20250712#
         driver-class-name: com.mysql.cj.jdbc.Driver
 server:
+    port: 8081
     tomcat:
         connection-timeout: 15m
         max-http-form-post-size: 10GB
