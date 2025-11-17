@@ -1,44 +1,26 @@
 package com.webkit640.ilog_core_backend.application.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import java.util.*;
 
 import com.webkit640.ilog_core_backend.SummaryController;
-import com.webkit640.ilog_core_backend.api.exception.CustomException;
-import com.webkit640.ilog_core_backend.api.request.MinutesRequest;
-import com.webkit640.ilog_core_backend.api.request.ParticipantRequest;
 import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
 import com.webkit640.ilog_core_backend.application.mapper.MinutesMapper;
 import com.webkit640.ilog_core_backend.application.mapper.ParticipantMapper;
 import com.webkit640.ilog_core_backend.domain.event.MinutesDeletedEvent;
 import com.webkit640.ilog_core_backend.domain.event.MinutesLogEvent;
-import com.webkit640.ilog_core_backend.domain.model.ActionType;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
-import com.webkit640.ilog_core_backend.domain.model.Folder;
-import com.webkit640.ilog_core_backend.domain.model.Member;
-import com.webkit640.ilog_core_backend.domain.model.Memo;
-import com.webkit640.ilog_core_backend.domain.model.MemoHistory;
-import com.webkit640.ilog_core_backend.domain.model.Minutes;
-import com.webkit640.ilog_core_backend.domain.model.MinutesHistory;
-import com.webkit640.ilog_core_backend.domain.model.MinutesParticipant;
-import com.webkit640.ilog_core_backend.domain.model.MinutesType;
-import com.webkit640.ilog_core_backend.domain.model.ParticipantType;
-import com.webkit640.ilog_core_backend.domain.repository.FolderDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MemberDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MemoDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MemoHistoryDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MinutesDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MinutesHistoryDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MinutesLogDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MinutesParticipantDAO;
+import com.webkit640.ilog_core_backend.domain.model.*;
+import com.webkit640.ilog_core_backend.domain.repository.*;
 import com.webkit640.ilog_core_backend.infrastructure.security.LinkTokenService;
+import com.webkit640.ilog_core_backend.infrastructure.util.CreateMemberUtils;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.webkit640.ilog_core_backend.api.exception.CustomException;
+import com.webkit640.ilog_core_backend.api.request.MinutesRequest;
+import com.webkit640.ilog_core_backend.api.request.ParticipantRequest;
 
 import lombok.AllArgsConstructor;
 
@@ -47,11 +29,9 @@ import lombok.AllArgsConstructor;
 public class MinutesService {
     private final MinutesDAO minutesDAO;
     private final FolderDAO folderDAO;
-    private final MinutesLogDAO minutesLogDAO;
     private final MinutesParticipantDAO minutesParticipantDAO;
     private final MinutesHistoryDAO minutesHistoryDAO;
     private final MemoHistoryDAO memoHistoryDAO;
-    private final MemberDAO memberDAO;
     private final MemberService memberService;
     private final PermissionPropagationService permissionPropagationService;
     private final MinutesLockService minutesLockService;
@@ -61,6 +41,7 @@ public class MinutesService {
     private final MemoDAO memoDAO;
     private final SummaryController summaryController;
     private final ApplicationEventPublisher eventPublisher;
+    private final CreateMemberUtils createMemberUtils;
     //회의록 생성(주인만)
     @Transactional
     public Minutes createMinutes(Long folderId, MinutesRequest.Create request, Long ownerId) {
@@ -92,16 +73,6 @@ public class MinutesService {
         minutes.setFolder(folder);
 
         minutesDAO.save(minutes);
-
-        //--------------------------folder에게 particiant를 물려받음----------------
-//        List<MinutesParticipant> clonedParticipants = folder.getFolderParticipants().stream()
-//                .map(mp->{
-//                    MinutesParticipant copy = new MinutesParticipant();
-//                    copy.setMinutes(minutes);
-//                    copy.setParticipant(mp.getParticipant());
-//                    copy.setApproachedAt(createdAt);
-//                    return copy;
-//                }).toList();
 
         List<MinutesParticipant> participants = new ArrayList<>(List.of());
 
@@ -186,11 +157,11 @@ public class MinutesService {
         minutes.setUpdatedAt(LocalDateTime.now());
         minutesDAO.save(minutes);
 
-        //--------------------------------로그-------------------------------
-        eventPublisher.publishEvent(
-                new MinutesLogEvent(this,minutes.getFolder().getOwner().getId(),minutes.getFolder().getOwner().getEmail(),
-                        LocalDateTime.now(),minutes.getTitle(),participant.getEmail(),ActionType.UPDATE, "본문 수정")
-        );
+//        //--------------------------------로그-------------------------------
+//        eventPublisher.publishEvent(
+//                new MinutesLogEvent(this,minutes.getFolder().getOwner().getId(),minutes.getFolder().getOwner().getEmail(),
+//                        LocalDateTime.now(),minutes.getTitle(),participant.getEmail(),ActionType.UPDATE, "본문 수정")
+//        );
         return minutes;
     }
 
@@ -315,7 +286,8 @@ public class MinutesService {
     // 참가자 추가
     public List<MinutesParticipant> createParticipant(Long minutesId, ParticipantRequest.Create request, Long ownerId) {
         Minutes minutes = getMinutes(minutesId, ownerId);
-        Member createMember = memberDAO.findByEmail(request.getCreateMemberEmail()).orElseThrow(()->new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Member createMember = createMemberUtils.getCreateMember(request);
 
         //---------------본인 인증-----------------------
         identityVerification(minutes.getFolder(), ownerId);
@@ -367,7 +339,7 @@ public class MinutesService {
             throw new CustomException(ErrorCode.PERMISSION_SELF_DELETE_DENIED);
         }
         //----------------삭제 -------------------------
-        permissionPropagationService.removeGrantToMinutes(minutesId, deleteMember.getId(), ownerId);
+        permissionPropagationService.removeGrantToMinutes(minutesId, deleteMember.getId());
         //----------------------로그--------------------------
         String email = memberService.getMember(ownerId).getEmail();
         permissionPropagationService.participantLogging(ownerId,email,LocalDateTime.now(),deleteMember.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 삭제");
@@ -479,4 +451,5 @@ public class MinutesService {
         minutesParticipant.setApproachedAt(LocalDateTime.now());
         minutesParticipantDAO.save(minutesParticipant);
     }
+
 }

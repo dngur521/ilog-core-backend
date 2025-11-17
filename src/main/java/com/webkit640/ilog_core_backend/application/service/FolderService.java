@@ -10,6 +10,7 @@ import com.webkit640.ilog_core_backend.domain.event.FolderDeletedEvent;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.*;
 import com.webkit640.ilog_core_backend.infrastructure.security.LinkTokenService;
+import com.webkit640.ilog_core_backend.infrastructure.util.CreateMemberUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,14 +35,13 @@ public class FolderService {
     private final PermissionPropagationService permissionPropagationService;
     private final FolderDAO folderDAO;
     private final MinutesDAO minutesDAO;
-    private final MemberDAO memberDAO;
     private final FolderParticipantDAO folderParticipantDAO;
     private final FolderMapper folderMapper;
     private final ParticipantMapper participantMapper;
     private final FolderLogDAO folderLogDAO;
-    private final ParticipantLogDAO participantLogDAO;
     private final ApplicationEventPublisher eventPublisher;
     private final LinkTokenService linkTokenService;
+    private final CreateMemberUtils createMemberUtils;
     //폴더 생성
     @Transactional
     public Folder createFolder(Long folderId, FolderRequest.Create request, Long ownerId, MultipartFile folderImage) {
@@ -257,7 +257,9 @@ public class FolderService {
     @Transactional
     public List<FolderParticipant> createParticipant(Long folderId, ParticipantRequest.Create request, Long ownerId) {
         Folder folder = getFolder(folderId);
-        Member createMember = memberDAO.findByEmail(request.getCreateMemberEmail()).orElseThrow(()->new CustomException(ErrorCode.MEMBER_NOT_FOUND));
+
+        Member createMember = createMemberUtils.getCreateMember(request);
+
 
         //---------------본인 인증-----------------------
         identityVerification(folder, ownerId);

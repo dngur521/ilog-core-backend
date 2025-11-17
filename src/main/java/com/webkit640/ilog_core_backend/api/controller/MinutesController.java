@@ -1,20 +1,26 @@
 package com.webkit640.ilog_core_backend.api.controller;
 
 import java.util.List;
-import java.util.Map;
 
-import com.webkit640.ilog_core_backend.application.service.MinutesLockService;
-import com.webkit640.ilog_core_backend.domain.model.MinutesHistory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.webkit640.ilog_core_backend.api.request.MinutesRequest;
 import com.webkit640.ilog_core_backend.api.request.ParticipantRequest;
 import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import com.webkit640.ilog_core_backend.api.response.ParticipantResponse;
-import com.webkit640.ilog_core_backend.application.mapper.ParticipantMapper;
 import com.webkit640.ilog_core_backend.application.mapper.MinutesMapper;
+import com.webkit640.ilog_core_backend.application.mapper.ParticipantMapper;
+import com.webkit640.ilog_core_backend.application.service.MinutesLockService;
 import com.webkit640.ilog_core_backend.application.service.MinutesService;
 import com.webkit640.ilog_core_backend.domain.model.Minutes;
 import com.webkit640.ilog_core_backend.domain.model.MinutesParticipant;

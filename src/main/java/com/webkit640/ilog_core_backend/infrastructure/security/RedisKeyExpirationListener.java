@@ -45,6 +45,7 @@ public class RedisKeyExpirationListener extends KeyExpirationEventMessageListene
                 logEntity.setCreatedAt(LocalDateTime.now());
                 logEntity.setStatus(ActionType.LOGOUT);
                 logEntity.setDescription("자동 로그아웃");
+                logEntity.setIpAddress(null);
 
                 loginLogDAO.save(logEntity);
 

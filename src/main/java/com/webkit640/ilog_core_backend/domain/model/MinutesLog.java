@@ -16,6 +16,7 @@ public class MinutesLog extends CommonLog {
     public LogResponse.Log toDto(){
         LogResponse.Log dto = super.toDto();
         dto.setMinutesTitle(minutesTitle);
+        dto.setIpAddress(null);
         return dto;
     }
 }

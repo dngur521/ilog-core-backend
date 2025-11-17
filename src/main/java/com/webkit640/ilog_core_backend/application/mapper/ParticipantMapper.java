@@ -15,7 +15,9 @@ public class ParticipantMapper {
                 entity.getId(),
                 entity.getFolder().getId(),
                 entity.getParticipant().getId(),
-                entity.getParticipant().getName()
+                entity.getParticipant().getName(),
+                entity.getParticipant().getEmail(),
+                entity.getParticipant().getProfileImage()
         );
     }
     private ParticipantResponse.MinutesParticipant toMinutesParticipant(MinutesParticipant entity) {
@@ -23,7 +25,9 @@ public class ParticipantMapper {
                 entity.getId(),
                 entity.getMinutes().getId(),
                 entity.getParticipant().getId(),
-                entity.getParticipant().getName()
+                entity.getParticipant().getName(),
+                entity.getParticipant().getEmail(),
+                entity.getParticipant().getProfileImage()
         );
     }
     public ParticipantResponse.Detail<ParticipantResponse.FolderParticipant> toFolderDetail(

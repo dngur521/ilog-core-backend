@@ -27,6 +27,8 @@ public class ParticipantResponse {
         private Long minutesId;
         private Long participantId;
         private String participantName;
+        private String participantEmail;
+        private String participantProfileImage;
     }
 
     @Data
@@ -36,6 +38,8 @@ public class ParticipantResponse {
         private Long folderId;
         private Long participantId;
         private String participantName;
+        private String participantEmail;
+        private String participantProfileImage;
     }
 
 }

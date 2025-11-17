@@ -25,6 +25,6 @@ public abstract class CommonLog {
     private ActionType status;
 
     public LogResponse.Log toDto(){
-        return new LogResponse.Log(id,createdAt, status);
+        return new LogResponse.Log(id,createdAt, status, null, null);
     }
 }

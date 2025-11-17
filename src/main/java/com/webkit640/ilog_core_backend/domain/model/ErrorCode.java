@@ -45,6 +45,8 @@ public enum ErrorCode {
     ALREADY_PARTICIPANT(HttpStatus.CONFLICT,"이미 참여자로 등록된 회원입니다." ),
     PARTICIPANT_NOT_FOUND(HttpStatus.NOT_FOUND,"참여자를 찾을 수 없습니다." ),
     PERMISSION_SELF_DELETE_DENIED(HttpStatus.FORBIDDEN,"자신의 권한을 삭제할 수 없습니다."),
+    INVALID_REQUEST(HttpStatus.UNAUTHORIZED,"request의 인자가 다릅니다."),
+
     //화상회의 관련
     ADDRESS_NOT_MATCH(HttpStatus.BAD_REQUEST,"회의 주소가 올바르지 않습니다."),
     MEETING_NOT_FOUND(HttpStatus.NOT_FOUND,"화상회의를 찾을 수 없습니다."),

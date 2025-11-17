@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.webkit640.ilog_core_backend.domain.model.*;
+import com.webkit640.ilog_core_backend.infrastructure.util.IpUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +33,7 @@ public class AuthService {
     private final LoginLogDAO loginLogDAO;
     private final TokenStoreService tokenStoreService;
     @Transactional
-    public AuthResponse.Token login(AuthRequest.Login request) {
+    public AuthResponse.Token login(AuthRequest.Login request, String clientIp) {
         //이메일로 회원인지 아닌지 파악
         Member member = memberDAO.findByEmail(request.getEmail())
                 .orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
@@ -54,7 +55,7 @@ public class AuthService {
         tokenStoreService.saveRefresh(member.getId(), refresh, refreshTtlSec);
 
         //--------------------- 로그 --------------------------
-        loginLogging(member.getId(), member.getEmail(),ActionType.LOGIN,"정상 로그인");
+        loginLogging(member.getId(), member.getEmail(),ActionType.LOGIN,"정상 로그인", clientIp);
         //------------------- 응답 반환 ------------------------
         return token;
     }
@@ -76,7 +77,8 @@ public class AuthService {
         }
         Member member = memberDAO.findById(user.getId()).orElseThrow(() -> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
         //--------------------- 로그 --------------------------
-        loginLogging(member.getId(),member.getEmail(),ActionType.LOGOUT,"정상 로그아웃");
+        String clientIp = IpUtils.getClientIP(request);
+        loginLogging(member.getId(),member.getEmail(),ActionType.LOGOUT,"정상 로그아웃", clientIp);
     }
 
     public AuthResponse.Token refresh(String refresh) {
@@ -104,13 +106,14 @@ public class AuthService {
         return new AuthResponse.Token(newAccess,refresh);
     }
 
-    private void loginLogging(Long userId, String email, ActionType actionType, String description){
+    private void loginLogging(Long userId, String email, ActionType actionType, String description, String ipAddress){
         LoginLog loginLog = new LoginLog();
         loginLog.setUserId(userId);
         loginLog.setEmail(email);
         loginLog.setCreatedAt(LocalDateTime.now());
         loginLog.setStatus(actionType);
         loginLog.setDescription(description);
+        loginLog.setIpAddress(ipAddress);
 
         loginLogDAO.save(loginLog);
     }
