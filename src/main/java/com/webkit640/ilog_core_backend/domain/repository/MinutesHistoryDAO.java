@@ -10,10 +10,10 @@ import java.util.Optional;
 
 public interface MinutesHistoryDAO extends JpaRepository<MinutesHistory, Long> {
 
-    List<MinutesHistory> findAllByMinutesId(Long minutesId);
+    List<MinutesHistory> findAllByMinutes_Id(Long minutesId);
 
-    Optional<MinutesHistory> findByMinutesIdAndHistoryId(Long minutesId, Long historyId);
+    Optional<MinutesHistory> findByMinutes_IdAndHistoryId(Long minutesId, Long historyId);
 
-    @Query("SELECT MAX(h.historyId) FROM MinutesHistory h WHERE h.minutesId = :minutesId")
+    @Query("SELECT MAX(h.historyId) FROM MinutesHistory h WHERE h.minutes.id = :minutesId")
     Optional<Long> findMaxHistoryIdByMinutesId(@Param("minutesId") Long minutesId);
 }

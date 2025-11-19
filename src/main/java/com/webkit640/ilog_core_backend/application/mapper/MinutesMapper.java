@@ -25,10 +25,17 @@ public class MinutesMapper {
                 minutes.getId(), minutes.getTitle(), minutes.getContent(),minutes.getCreatedAt(), minutes.getUpdatedAt(), memos);
     }
     private MinutesResponse.Memos toMinutesInMemos(Memo entity){
+        String writerEmail = (entity.getMember() != null)
+                ? entity.getMember().getEmail()
+                : "탈퇴한 사용자";
+        String writerName = (entity.getMember() != null)
+                ? entity.getMember().getName()
+                : "탈퇴한 사용자";
+
         return new MinutesResponse.Memos(
                 entity.getLocalId(),
-                entity.getMember().getEmail(),
-                entity.getMember().getName(),
+                writerEmail,
+                writerName,
                 entity.getMemoType(),
                 entity.getContent(),
                 entity.getStartIndex(),
@@ -61,7 +68,7 @@ public class MinutesMapper {
                 {
                     List<MemoHistory> filteredMemos = memoList.stream()
                             .filter(m ->
-                                    m.getMinutesHistory().getMinutesId().equals(mh.getMinutesId()) &&
+                                    m.getMinutesHistory().getMinutes().getId().equals(mh.getMinutes().getId()) &&
                                     m.getMinutesHistory().getHistoryId().equals(mh.getHistoryId()))
                             .toList();
                     return toFindHistory(mh, filteredMemos);
@@ -76,13 +83,20 @@ public class MinutesMapper {
                 .toList();
         return new MinutesResponse.FindHistory(
 
-                minutesHistory.getId(), minutesHistory.getMinutesId(), minutesHistory.getHistoryId(),minutesHistory.getTitle(), minutesHistory.getContent(),minutesHistory.getSummary(),minutesHistory.getCreatedAt(), minutesHistory.getUpdatedAt(), memos);
+                minutesHistory.getId(), minutesHistory.getMinutes().getId(), minutesHistory.getHistoryId(),minutesHistory.getTitle(), minutesHistory.getContent(),minutesHistory.getSummary(),minutesHistory.getCreatedAt(), minutesHistory.getUpdatedAt(), memos);
     }
     private MinutesResponse.Memos toMinutesHistoryInMemos(MemoHistory entity){
+        String writerEmail = (entity.getMember() != null)
+                ? entity.getMember().getEmail()
+                : "탈퇴한 사용자";
+        String writerName = (entity.getMember() != null)
+                ? entity.getMember().getName()
+                : "탈퇴한 사용자";
+
         return new MinutesResponse.Memos(
                 entity.getLocalId(),
-                entity.getMember().getEmail(),
-                entity.getMember().getName(),
+                writerEmail,
+                writerName,
                 entity.getMemoType(),
                 entity.getContent(),
                 entity.getStartIndex(),

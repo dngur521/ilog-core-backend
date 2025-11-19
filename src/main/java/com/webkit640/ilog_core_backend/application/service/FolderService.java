@@ -168,10 +168,10 @@ public class FolderService {
 
     //폴더 이미지 삭제
     @Transactional
-    public void deleteFolderImage(Long folderId, CustomUserDetails owner) {
+    public void deleteFolderImage(Long folderId, Long participantId) {
         Folder folder = getFolder(folderId);
-        //-------------------본인 인증-------------------
-        identityVerification(folder, owner.getId());
+        //-------------------참여자 인증-------------------
+        identityParticipant(folder, participantId);
 
         if(folder.getFolderImage() == null || folder.getFolderImage().isBlank()){
             throw new CustomException(ErrorCode.FILE_IMAGE_NOT_FOUND);
@@ -344,6 +344,7 @@ public class FolderService {
         folderParticipant.setApproachedAt(LocalDateTime.now());
         folderParticipantDAO.save(folderParticipant);
     }
+
 
     //정렬 관리
     private FolderResponse.Find getChild(

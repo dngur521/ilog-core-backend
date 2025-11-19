@@ -78,10 +78,11 @@ public class PermissionPropagationService {
     // 하위 -> 상위 전체 삭제 : 회의록에서 제거되어 해당 회원의 모든 회의록에 접근이 완전 불가능할때
     //                       -> 모든 상위 폴더에서도 제거
     @Transactional
-    public void removeGrantToMinutes(Long minutesId, Long memberId){
+    public void removeGrantToMinutes(Long minutesId, Long memberId, Long ownerId){
 
         Minutes minutes = minutesDAO.findById(minutesId)
                 .orElseThrow(()-> new CustomException(ErrorCode.MINUTES_NOT_FOUND));
+        Folder folder = minutes.getFolder();
 
         Member member = memberService.getMember(memberId);
         //-------------------회의록 모두 확인 -------------------

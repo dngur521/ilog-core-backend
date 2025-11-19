@@ -1,5 +1,6 @@
 package com.webkit640.ilog_core_backend.api.response;
 
+import com.webkit640.ilog_core_backend.domain.model.ActionType;
 import com.webkit640.ilog_core_backend.domain.model.Memo;
 import com.webkit640.ilog_core_backend.domain.model.MemoType;
 import lombok.AllArgsConstructor;
@@ -87,5 +88,16 @@ public class MinutesResponse {
         private Long remainSeconds;
         private Long userId;
         private String userName;
+    }
+
+
+    @Data
+    @AllArgsConstructor
+    public static class Calender{
+        private Long id;
+        private String title;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+        private String folderName;
     }
 }

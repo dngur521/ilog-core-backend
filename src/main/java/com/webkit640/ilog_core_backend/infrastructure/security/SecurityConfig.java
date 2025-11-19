@@ -13,7 +13,6 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -62,7 +61,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         // cfg.setAllowedOrigins(List.of("https://webkit-ilo9.duckdns.org", "http://localhost:3000", "*"));
-        cfg.setAllowedOriginPatterns(List.of("https://webkit-ilo9.duckdns.org", "http://localhost:3000", "*"));
+        cfg.setAllowedOriginPatterns(List.of("https://webkit-ilo9.duckdns.org", "*"));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         // cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         cfg.setAllowedHeaders(List.of("*"));
@@ -126,7 +125,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/rag/index").permitAll()
                 .requestMatchers(HttpMethod.POST, "/rag/ask").permitAll()
                 .requestMatchers(HttpMethod.GET, "/redirect/**").permitAll()
-                                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
+                                .requestMatchers("/ws/**").permitAll()
                 // 관리자 전용 API
                 .requestMatchers("/admin/**").hasRole("ADMIN")        
                 // 로그인 사용자만 접근 가능

@@ -14,6 +14,8 @@ import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.*;
 import com.webkit640.ilog_core_backend.infrastructure.security.LinkTokenService;
 import com.webkit640.ilog_core_backend.infrastructure.util.CreateMemberUtils;
+import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ import com.webkit640.ilog_core_backend.api.request.ParticipantRequest;
 
 import lombok.AllArgsConstructor;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class MinutesService {
@@ -86,8 +89,6 @@ public class MinutesService {
         minutesParticipantDAO.saveAll(participants);
         minutes.setMinutesParticipants(participants);
 
-        historyBackup(minutes);
-
         //--------------------------------로그-------------------------------
         eventPublisher.publishEvent(
                 new MinutesLogEvent(this,ownerId,owner.getEmail(),createdAt,minutes.getTitle(),owner.getEmail(),ActionType.CREATE, "정상 생성")
@@ -144,24 +145,43 @@ public class MinutesService {
         //---------------- 참가자면 수정 가능 -------------------
         identityParticipant(minutes, participant.getId());
 
-        //------------------ history에 저장----------------------
-        historyBackup(minutes);
+        LocalDateTime updatedAt = LocalDateTime.now();
 
         //수정
-        if(request.getTitle() != null && !request.getTitle().isBlank()) {
-            minutes.setTitle(request.getTitle());
-        }
-        if(request.getContent() != null && !request.getContent().isBlank()){
-            minutes.setContent(request.getContent());
-        }
-        minutes.setUpdatedAt(LocalDateTime.now());
-        minutesDAO.save(minutes);
+        if((request.getTitle() != null && !request.getTitle().isBlank())
+                || (request.getContent() != null && !request.getContent().isBlank())){
 
-//        //--------------------------------로그-------------------------------
-//        eventPublisher.publishEvent(
-//                new MinutesLogEvent(this,minutes.getFolder().getOwner().getId(),minutes.getFolder().getOwner().getEmail(),
-//                        LocalDateTime.now(),minutes.getTitle(),participant.getEmail(),ActionType.UPDATE, "본문 수정")
-//        );
+            //------------------ history에 저장----------------------
+            historyBackup(minutes);
+
+            if(request.getTitle() != null && !request.getTitle().isBlank()) {
+                minutes.setTitle(request.getTitle());
+            }
+            if(request.getContent() != null && !request.getContent().isBlank()){
+                minutes.setContent(request.getContent());
+
+                SummaryController.SimpleSummaryRequest summaryRequest = new SummaryController.SimpleSummaryRequest();
+                summaryRequest.setText(request.getContent());
+                String summarize = summaryController.handleSimpleSummary(summaryRequest).getBody().getSummary();
+                minutes.setSummary(summarize);
+
+                List<Memo> memos = minutes.getMemos();
+                for(Memo memo : memos){
+                    memo.setStartIndex(0);
+                    memo.setEndIndex(0);
+                }
+                memoDAO.saveAll(memos);
+            }
+
+            minutes.setUpdatedAt(updatedAt);
+            minutesDAO.save(minutes);
+
+            //--------------------------------로그-------------------------------
+            eventPublisher.publishEvent(
+                    new MinutesLogEvent(this,minutes.getFolder().getOwner().getId(),minutes.getFolder().getOwner().getEmail(),
+                            updatedAt,minutes.getTitle(),participant.getEmail(),ActionType.UPDATE, "본문 수정")
+            );
+        }
         return minutes;
     }
 
@@ -182,33 +202,6 @@ public class MinutesService {
         minutesDAO.delete(minutes);
     }
 
-
-    //회의록 재요약
-    @Transactional
-    public void summaryMinutes(Long minutesId, Long participantId){
-        Minutes minutes = getMinutes(minutesId, participantId);
-        Member participant = memberService.getMember(participantId);
-
-        //------------------ history에 저장----------------------
-        historyBackup(minutes);
-
-        //-----------------------회의록 재요약 -------------------------------
-        SummaryController.SimpleSummaryRequest summaryRequest = new SummaryController.SimpleSummaryRequest();
-        summaryRequest.setText(minutes.getContent());
-        String summarize = summaryController.handleSimpleSummary(summaryRequest).getBody().getSummary();
-        minutes.setSummary(summarize);
-        LocalDateTime updatedAt = LocalDateTime.now();
-        minutes.setUpdatedAt(updatedAt);
-        //------------------------ 수정 -------------------------------
-        minutesDAO.save(minutes);
-
-        //--------------------------------로그-------------------------------
-        eventPublisher.publishEvent(
-                new MinutesLogEvent(this,minutes.getFolder().getOwner().getId(),minutes.getFolder().getOwner().getEmail(),
-                        updatedAt,minutes.getTitle(),participant.getEmail(),ActionType.UPDATE, "요약본 수정")
-        );
-    }
-
     //--------------------------- 히스토리 조회 -----------------------------
     public List<MinutesResponse.FindHistory> getMinutesHistory(Long minutesId, Long userId){
         //--------------------- 회의록이 없으면 에러 ---------------------
@@ -219,8 +212,8 @@ public class MinutesService {
         participantVerification(minutes, userId);
 
         //---------- 회의록 history DB에서 가져와서 return ----------------
-        List<MinutesHistory> minutesHistories = minutesHistoryDAO.findAllByMinutesId(minutesId);
-        List<MemoHistory> memoHistories = memoHistoryDAO.findAllByMinutesId(minutesId);
+        List<MinutesHistory> minutesHistories = minutesHistoryDAO.findAllByMinutes_Id(minutesId);
+        List<MemoHistory> memoHistories = memoHistoryDAO.findAllByMinutesHistory_Minutes_Id(minutesId);
 
         return minutesMapper.toFindHistoryList(minutesHistories, memoHistories);
     }
@@ -234,7 +227,7 @@ public class MinutesService {
         historyBackup(minutes);
 
         //--------------------- history에서 특정 버전 조회해서 되돌리기 ----------------------------
-        MinutesHistory history = minutesHistoryDAO.findByMinutesIdAndHistoryId(minutesId, historyId)
+        MinutesHistory history = minutesHistoryDAO.findByMinutes_IdAndHistoryId(minutesId, historyId)
                 .orElseThrow(() -> new CustomException(ErrorCode.HISTORY_NOT_FOUND));
 
         minutes.setTitle(history.getTitle());
@@ -247,7 +240,7 @@ public class MinutesService {
 
         memoDAO.deleteAllByMinutes_Id(minutesId);
 
-        List<MemoHistory> memoHistories = memoHistoryDAO.findAllByMinutesIdAndMinutesHistoryId(minutesId, historyId);
+        List<MemoHistory> memoHistories = memoHistoryDAO.findAllByMinutesHistory_Minutes_IdAndMinutesHistory_HistoryId(minutesId, historyId);
 
         //----------------- 메모 롤백 -----------------------
         for (MemoHistory mh : memoHistories) {
@@ -338,8 +331,14 @@ public class MinutesService {
         if(minutes.getFolder().getOwner().getId().equals(request.getDeleteMemberId())){
             throw new CustomException(ErrorCode.PERMISSION_SELF_DELETE_DENIED);
         }
+        //-------------삭제할 참가자가 있어야 퇴출----------------
+        boolean exists = minutes.getMinutesParticipants().stream()
+                .anyMatch(m-> m.getParticipant().getId().equals(deleteMember.getId()));
+        if(!exists){
+            throw new CustomException(ErrorCode.PARTICIPANT_NOT_FOUND);
+        }
         //----------------삭제 -------------------------
-        permissionPropagationService.removeGrantToMinutes(minutesId, deleteMember.getId());
+        permissionPropagationService.removeGrantToMinutes(minutesId, deleteMember.getId(), ownerId);
         //----------------------로그--------------------------
         String email = memberService.getMember(ownerId).getEmail();
         permissionPropagationService.participantLogging(ownerId,email,LocalDateTime.now(),deleteMember.getEmail(), ParticipantType.MINUTES,ActionType.DELETE,"참여자 삭제");
@@ -397,7 +396,7 @@ public class MinutesService {
         Long latestVersion = minutesHistoryDAO.findMaxHistoryIdByMinutesId(minutes.getId()).orElse(0L);
 
         MinutesHistory history = new MinutesHistory();
-        history.setMinutesId(minutes.getId());
+        history.setMinutes(minutes);
         history.setHistoryId(latestVersion + 1);
         history.setTitle(minutes.getTitle());
         history.setContent(minutes.getContent());
@@ -420,7 +419,6 @@ public class MinutesService {
     private static MemoHistory getMemoHistory(Memo memo, MinutesHistory history) {
         MemoHistory mh = new MemoHistory();
         mh.setLocalId(memo.getLocalId());
-        mh.setMinutesId(memo.getMinutes().getId());
         mh.setMinutesHistory(history);  // <-- 연결 포인트
         mh.setMember(memo.getMember());
         mh.setMemoType(memo.getMemoType());
@@ -452,4 +450,7 @@ public class MinutesService {
         minutesParticipantDAO.save(minutesParticipant);
     }
 
+    public List<MinutesResponse.Calender> getMinutesCalender(Long userId) {
+        return minutesDAO.findAllCalendarByParticipantId(userId);
+    }
 }

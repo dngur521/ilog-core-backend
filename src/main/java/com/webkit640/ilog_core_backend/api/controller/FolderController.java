@@ -2,6 +2,7 @@ package com.webkit640.ilog_core_backend.api.controller;
 
 import java.util.List;
 
+import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -62,7 +63,7 @@ public class FolderController {
         FolderResponse.Find response = folderService.getFolderDetail(folderId,userId, order);
         return ResponseEntity.ok(response);
     }
-    
+
     //폴더 수정
     @PatchMapping(value = "/{folderId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<FolderResponse.Update> updateFolder(
@@ -72,7 +73,7 @@ public class FolderController {
             @AuthenticationPrincipal CustomUserDetails owner
     ){
         Long ownerId = owner.getId();
-        Folder folder = folderService.updateFolder(folderId, request,ownerId, folderImage);
+        Folder folder = folderService.updateFolder(folderId, request, ownerId, folderImage);
         return ResponseEntity.ok(folderMapper.toUpdate(folder));
     }
     //폴더 삭제 <- 하위 폴더 싹다 삭제 예정
@@ -89,9 +90,10 @@ public class FolderController {
     @DeleteMapping("/{folderId}/image")
     public ResponseEntity<Void> deleteFolderImage(
             @PathVariable("folderId") Long folderId,
-            @AuthenticationPrincipal CustomUserDetails owner
+            @AuthenticationPrincipal CustomUserDetails participant
     ){
-        folderService.deleteFolderImage(folderId, owner);
+        Long participantId = participant.getId();
+        folderService.deleteFolderImage(folderId, participantId);
         return ResponseEntity.noContent().build();
     }
 
@@ -124,10 +126,10 @@ public class FolderController {
     @GetMapping("/{folderId}/party")
     public ResponseEntity<ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant>> findParticipant(
             @PathVariable("folderId") Long folderId,
-            @AuthenticationPrincipal CustomUserDetails owner
+            @AuthenticationPrincipal CustomUserDetails participant
     ){
-        Long ownerId = owner.getId();
-        ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant> folderParticipantList = folderService.getParticipant(folderId, ownerId);
+        Long participantId = participant.getId();
+        ParticipantResponse.DetailLink<ParticipantResponse.FolderParticipant> folderParticipantList = folderService.getParticipant(folderId, participantId);
         return ResponseEntity.ok(folderParticipantList);
     }
 

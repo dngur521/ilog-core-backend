@@ -14,7 +14,6 @@ public class MemoHistory {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long minutesId;
     private Long localId;
 
     @ManyToOne(fetch = FetchType.LAZY)

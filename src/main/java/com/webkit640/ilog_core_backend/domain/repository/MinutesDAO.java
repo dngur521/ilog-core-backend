@@ -3,6 +3,7 @@ package com.webkit640.ilog_core_backend.domain.repository;
 import java.util.List;
 
 import com.webkit640.ilog_core_backend.api.response.FolderResponse;
+import com.webkit640.ilog_core_backend.api.response.MinutesResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.webkit640.ilog_core_backend.domain.model.Folder;
@@ -156,4 +157,20 @@ public interface MinutesDAO extends JpaRepository<Minutes, Long> {
     AND mp.participant.id = :userId
 """)
     int countByFolderAndParticipants(@Param("folder") Folder folder, @Param("userId") Long userId);
+
+    @Query("""
+        SELECT new com.webkit640.ilog_core_backend.api.response.MinutesResponse$Calender(
+            m.id,
+            m.title,
+            m.createdAt,
+            m.updatedAt,
+            f.folderName
+        )
+        FROM Minutes m
+        JOIN m.folder f
+        JOIN f.folderParticipants fp
+        WHERE fp.participant.id = :participantId
+    """)
+    List<MinutesResponse.Calender> findAllCalendarByParticipantId(@Param("participantId") Long participantId);
+
 }

@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface MemoHistoryDAO extends JpaRepository<MemoHistory, Long> {
-    List<MemoHistory> findAllByMinutesId(Long minutesId);
+    List<MemoHistory> findAllByMinutesHistory_Minutes_Id(Long minutesId);
 
-    List<MemoHistory> findAllByMinutesIdAndMinutesHistoryId(Long minutesId, Long historyId);
+    List<MemoHistory> findAllByMinutesHistory_Minutes_IdAndMinutesHistory_HistoryId(Long minutesId, Long historyId);
 }

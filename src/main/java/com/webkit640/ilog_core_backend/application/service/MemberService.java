@@ -3,11 +3,8 @@ package com.webkit640.ilog_core_backend.application.service;
 import com.webkit640.ilog_core_backend.api.exception.CustomException;
 import com.webkit640.ilog_core_backend.api.request.MemberRequest;
 import com.webkit640.ilog_core_backend.domain.model.*;
-import com.webkit640.ilog_core_backend.domain.repository.FolderDAO;
-import com.webkit640.ilog_core_backend.domain.repository.FolderParticipantDAO;
-import com.webkit640.ilog_core_backend.domain.repository.MinutesParticipantDAO;
+import com.webkit640.ilog_core_backend.domain.repository.*;
 import com.webkit640.ilog_core_backend.infrastructure.security.JwtTokenProvider;
-import com.webkit640.ilog_core_backend.domain.repository.MemberDAO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,9 +24,9 @@ public class MemberService {
     private final FolderDAO folderDAO;
     private final FolderParticipantDAO folderParticipantDAO;
     private final MinutesParticipantDAO minutesParticipantDAO;
+    private final MemoDAO memoDAO;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-
     @Transactional
     //회원 가입
     public Member registerMember(MemberRequest.Create request, MultipartFile profileImage){
@@ -151,6 +148,12 @@ public class MemberService {
 
         //---------------------이미지 삭제--------------------
         fileService.delete(member.getProfileImage());
+        //---------------- 회원의 모든 메모의 메모를 null로 변경 -----------------
+        List<Memo> memos = memoDAO.findAllByMember(member);
+        for(Memo memo : memos){
+            memo.setMember(null);
+        }
+        memoDAO.saveAll(memos);
         //-------------------회원 삭제 DB 반영-------------------
         memberDAO.delete(member);
     }

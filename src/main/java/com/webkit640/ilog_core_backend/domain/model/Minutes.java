@@ -32,4 +32,6 @@ public class Minutes {
     private List<MinutesParticipant> minutesParticipants = new ArrayList<>();
     @OneToMany(mappedBy = "minutes", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Memo> memos = new ArrayList<>();
+    @OneToMany(mappedBy = "minutes", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MinutesHistory> minutesHistories = new ArrayList<>();
 }

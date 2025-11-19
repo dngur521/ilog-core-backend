@@ -110,8 +110,10 @@ public class MemoService {
     private Memo verifyMemo(Long minutesId, Long memoId, Long participantId){
         //------------- 메모 찾기 ------------
         Memo memo = memoDAO.findByMinutes_IdAndLocalId(minutesId, memoId).orElseThrow(()->new CustomException(ErrorCode.MEMO_NOT_FOUND));
-        //------------- 본인이 작성한 메모인지 확인 ----------------------
-        identityVerification(memo, participantId);
+        if(memo.getMember() != null){
+            //------------- 본인이 작성한 메모인지 확인 ----------------------
+            identityVerification(memo, participantId);
+        }
         //----------------- 이 메모가 회의록의 메모인지 확인--------------
         if(!memo.getMinutes().getId().equals(minutesId)){
             throw new CustomException(ErrorCode.MINUTES_NOT_MATCH);

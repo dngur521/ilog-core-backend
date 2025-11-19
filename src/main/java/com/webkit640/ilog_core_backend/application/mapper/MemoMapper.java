@@ -20,9 +20,12 @@ public class MemoMapper {
     }
 
     public MemoResponse.Summary toSummary(Memo memo) {
+        String writerName = (memo.getMember() != null)
+                ? memo.getMember().getName()
+                : "탈퇴한 사용자";
         return new MemoResponse.Summary(
                 memo.getLocalId(),
-                memo.getMember().getName(),
+                writerName,
                 memo.getContent(),
                 memo.getMemoType(),
                 memo.getCreatedAt(),
