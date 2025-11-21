@@ -27,16 +27,7 @@ public class MemberResponse {
         private String name;
         private String phoneNum;
         private LocalDateTime joinedAt;
-        private List<FolderSummary> folders;
         private String profileImage;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class FolderSummary{
-        private Long id;
-        private String name;
-        private LocalDateTime createdAt;
     }
 
     @Data

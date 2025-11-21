@@ -59,7 +59,6 @@ public class MemberController {
         return ResponseEntity.ok(memberMapper.toFind(member));
     }
 
-
     //회원 비밀번호 입력 (아.. /verify로 할껄, 회원 수정이라서 password까지 갈 필요 없을 것 같은데)
     @PostMapping("/password/input")
     public ResponseEntity<Void> inputPassword(
@@ -70,7 +69,6 @@ public class MemberController {
         memberService.inputPassword(request,currentMemberId);
         return ResponseEntity.noContent().build();
     }
-
 
     //회원 삭제
     @DeleteMapping("/{memberId}")

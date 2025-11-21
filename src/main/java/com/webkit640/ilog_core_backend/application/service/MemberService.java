@@ -1,6 +1,7 @@
 package com.webkit640.ilog_core_backend.application.service;
 
 import com.webkit640.ilog_core_backend.api.exception.CustomException;
+import com.webkit640.ilog_core_backend.api.request.AdminRequest;
 import com.webkit640.ilog_core_backend.api.request.MemberRequest;
 import com.webkit640.ilog_core_backend.domain.model.*;
 import com.webkit640.ilog_core_backend.domain.repository.*;
@@ -90,6 +91,12 @@ public class MemberService {
         return memberDAO.findById(id).orElseThrow(()-> new CustomException(ErrorCode.MEMBER_NOT_FOUND));
     }
 
+    //모든 회원 조회(관리자)
+    public List<Member> getAllMember(Long id) {
+        return memberDAO.findAll();
+    }
+
+
     //회원 정보 수정
     @Transactional
     public Member updateMember(MemberRequest.Update request, Long currentMemberId, MultipartFile profileImage) {
@@ -132,17 +139,60 @@ public class MemberService {
         return member;
     }
 
+    //회원 정보 수정
+    @Transactional
+    public Member alterMember(AdminRequest.Update request, Long adminId, MultipartFile profileImage) {
+        //-------------------회원 조회-------------------
+        Member admin = getMember(adminId);
+        Member member = getMember(request.getId());
+        //-------------------관리자 검증-------------------
+        if(!admin.getRole().name().equals("ADMIN")){
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
+        }
+
+        //-------------------입력 값이 있을때만 수정-------------------
+        if(request.getName() != null){
+            member.setName(request.getName());
+        }
+
+        //-----------------비밀번호가 존재할 때만 변경 ------------------
+        if(request.getNewPassword() != null && request.getCheckPassword() != null){
+            //---------------- 입력 비밀번호가 같은지 -------------------------
+            if(!request.getNewPassword().equals(request.getCheckPassword())){
+                throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH);
+            }
+            //------------------이전 비밀번호와 다른지 ------------------------
+            if(passwordEncoder.matches( request.getNewPassword(), member.getPassword())){
+                throw new CustomException(ErrorCode.SAME_PASSWORD);
+            }
+            member.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+
+        //프로필 사진 수정
+        if(profileImage != null && !profileImage.isEmpty()) {
+            if(member.getProfileImage() != null && !member.getProfileImage().isBlank()){
+                fileService.delete(member.getProfileImage());
+            }
+            String uploadedUrl = fileService.upload(profileImage);
+            member.setProfileImage(uploadedUrl);
+        }
+        //-------------------수정된 내용 DB에 반영-------------------
+        memberDAO.save(member);
+        return member;
+    }
+
     //회원 삭제
     @Transactional
-    public void deleteMember(Long memberId, Long currentMemberId) {
+    public void deleteMember(Long memberId, Long adminId) {
         //-------------------회원 조회-------------------
+        Member admin = getMember(adminId);
         Member member = getMember(memberId);
 
-        //-------------------본인 검증-------------------
-        if(!member.getId().equals(currentMemberId)){
-            throw new CustomException(ErrorCode.UNAUTHORIZED_DELETE);
+        //-------------------관리자 검증-------------------
+        if(!admin.getRole().name().equals("ADMIN")){
+            throw new CustomException(ErrorCode.ACCESS_DENIED);
         }
-        //모든 참가자 명단에 자신 제거, 다른 사람의 참가자 일때 영향 못미쳐서 추가한 코드
+        //모든 참가자 명단에 삭제할 회원 제거, 다른 사람의 참가자 일때 영향 못미쳐서 추가한 코드
         minutesParticipantDAO.deleteAllByParticipant(member);
         folderParticipantDAO.deleteAllByParticipant(member);
 

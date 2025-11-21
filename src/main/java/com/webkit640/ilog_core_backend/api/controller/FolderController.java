@@ -98,16 +98,18 @@ public class FolderController {
     }
 
 
-    //검색어로 회의록 조회
-    @GetMapping("/search")
-    public ResponseEntity<List<FolderResponse.MinutesSummary>> searchFolder(
-            @ModelAttribute FolderRequest.Search request,
-            @AuthenticationPrincipal CustomUserDetails user
-    ){
-        Long userId = user.getId();
-        List<FolderResponse.MinutesSummary> response = folderService.getSearchMinutes(request, userId);
-        return ResponseEntity.ok(folderMapper.toSearch(response));
-    }
+//    //검색어로 회의록 조회 - 이거 안쓰더라
+//    @GetMapping("/search")
+//    public ResponseEntity<List<FolderResponse.MinutesSummary>> searchFolder(
+//            @ModelAttribute FolderRequest.Search request,
+//            @AuthenticationPrincipal CustomUserDetails user
+//    ){
+//        Long userId = user.getId();
+//        List<FolderResponse.MinutesSummary> response = folderService.getSearchMinutes(request, userId);
+//        return ResponseEntity.ok(folderMapper.toSearch(response));
+//    }
+//
+//
     //---------------조원 권한 관리-----------------------------
     private final ParticipantMapper participantMapper;
     //조원 관리 추가

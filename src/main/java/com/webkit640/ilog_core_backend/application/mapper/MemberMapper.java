@@ -13,18 +13,7 @@ public class MemberMapper {
 
     }
     public MemberResponse.Detail toFind(Member member){
-
-        List<MemberResponse.FolderSummary> folders =
-                member.getFolders() == null ? List.of()
-                        : member.getFolders().stream()
-                        .map(f -> new MemberResponse.FolderSummary(
-                                f.getId(),
-                                f.getFolderName(),
-                                f.getCreatedAt()
-                        ))
-                        .toList();
-
-        return new MemberResponse.Detail(member.getId(),member.getEmail(),member.getName(), member.getPhoneNum(), member.getJoinedAt(), folders, member.getProfileImage());
+        return new MemberResponse.Detail(member.getId(),member.getEmail(),member.getName(), member.getPhoneNum(), member.getJoinedAt(), member.getProfileImage());
     }
 
     public List<MemberResponse.Email> toEmail(List<String> email) {
