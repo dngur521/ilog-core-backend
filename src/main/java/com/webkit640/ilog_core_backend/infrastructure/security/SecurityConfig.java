@@ -2,9 +2,6 @@ package com.webkit640.ilog_core_backend.infrastructure.security;
 
 import java.util.List;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.webkit640.ilog_core_backend.api.response.ErrorResponse;
-import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -24,6 +21,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.webkit640.ilog_core_backend.api.response.ErrorResponse;
+import com.webkit640.ilog_core_backend.domain.model.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -61,7 +62,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
         // cfg.setAllowedOrigins(List.of("https://webkit-ilo9.duckdns.org", "http://localhost:3000", "*"));
-        cfg.setAllowedOriginPatterns(List.of("https://webkit-ilo9.duckdns.org", "*"));
+        cfg.setAllowedOriginPatterns(List.of("https://webkit-ilo9.duckdns.org"));
         cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         // cfg.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         cfg.setAllowedHeaders(List.of("*"));
