@@ -138,9 +138,9 @@ public class MinutesService {
         Minutes minutes = getMinutes(minutesId, participantId);
         Member participant = memberService.getMember(participantId);
 
-        if(MinutesType.MEETING.equals(minutes.getStatus())){
-            throw new CustomException(ErrorCode.UPDATE_DENIED);
-        }
+//        if(MinutesType.MEETING.equals(minutes.getStatus())){
+//            throw new CustomException(ErrorCode.UPDATE_DENIED);
+//        }
 
         //---------------- 참가자면 수정 가능 -------------------
         identityParticipant(minutes, participant.getId());
